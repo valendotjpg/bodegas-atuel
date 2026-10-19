@@ -60,11 +60,11 @@ docker compose down -v && docker compose up -d
 - La API y el front no calculan totales, descuentos ni stock: llaman a la base.
 - Nunca subir secretos. Usar `.env` (ignorado por git).
 
-## Equipo
-
-- *Integrante 1*
-- *Integrante 2*
-- *Integrante 3*
+## Equipo 
+Grupo N°7:
+- *Mansalve Augusto*
+- *Praderio Valentin*
+- *Quiroga Constanza*
 
 ## URL en la nube
 
