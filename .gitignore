@@ -1,0 +1,19 @@
+# Secretos
+.env
+*.pem
+# Dumps pesados (se regeneran con db/seed)
+*.sql.gz
+*.dump
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+# Node
+node_modules/
+dist/
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
