@@ -1,18 +1,22 @@
 # Etapa 1: solo la base. API y front se agregan en las etapas 6 y 7.
 services:
   db:
-    image: postgres:16
+    image: postgres:16.4
     container_name: bodegas_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Los usa db/migrations/007_roles.sh para crear el rol de la API.
+      API_DB_USER: ${API_DB_USER}
+      API_DB_PASSWORD: ${API_DB_PASSWORD}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Los .sql de esta carpeta corren en orden alfabetico (001, 002, ...)
-      # solo la PRIMERA vez que se crea el volumen.
+      # Los .sql y .sh de esta carpeta corren en orden alfabetico (001, 002, ...)
+      # solo la PRIMERA vez que se crea el volumen. Si una falla, la init se
+      # corta y hay que recrear el volumen (docker compose down -v).
       - ./db/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
