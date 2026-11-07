@@ -9,6 +9,12 @@ CREATE DOMAIN cuit_dom AS CHAR(11)
    Tablas
 */
 
+CREATE TABLE Bodega(
+    cuit_bodega cuit_dom PRIMARY KEY,
+    razon_social VARCHAR(100) NOT NULL,
+    calle VARCHAR(50) NOT NULL,
+    numero INT NOT NULL
+);
 CREATE TABLE Vino(
     cod_vino INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     anada SMALLINT NOT NULL,
@@ -18,12 +24,6 @@ CREATE TABLE Vino(
     graduacion NUMERIC(4,2) NOT NULL,
     volumen_ml INT NOT NULL,
     cuit_bodega cuit_dom NOT NULL
-);
-CREATE TABLE Bodega(
-    cuit_bodega cuit_dom PRIMARY KEY,
-    razon_social VARCHAR(100) NOT NULL,
-    calle VARCHAR(50) NOT NULL,
-    numero INT NOT NULL
 );
 CREATE TABLE Localidad(
     cod_postal INT PRIMARY KEY,
@@ -141,8 +141,8 @@ CREATE TABLE Permiso_exportacion(
 CREATE TABLE Comprobante(
     nro_comprobante SERIAL PRIMARY KEY,
     fecha DATE NOT NULL,
-    subtotal NUMERIC(12,2) NOT NULL,
-    descuento NUMERIC(12,2) NOT NULL,
+    subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+    descuento NUMERIC(12,2) NOT NULL DEFAULT 0,
     total NUMERIC(12,2) NOT NULL,
     id_sala INT NOT NULL,
     id_cliente INT NOT NULL
@@ -176,7 +176,7 @@ CREATE TABLE Transportista_Localidad(
 );
 CREATE TABLE Ingreso(
     cod_ingreso SERIAL PRIMARY KEY,
-    estado estado_documento NOT NULL,
+    estado estado_documento NOT NULL DEFAULT 'en_confeccion',
     fecha_ingreso DATE DEFAULT CURRENT_DATE,
     cuit_bodega cuit_dom NOT NULL,
     cod_transporte INT NOT NULL
@@ -212,7 +212,7 @@ CREATE TABLE Transferencia_Vino(
 CREATE TABLE Auditoria(
     id_auditoria SERIAL PRIMARY KEY,
     cod_vino INT NOT NULL,
-    usuario VARCHAR(50) NOT NULL,
+    usuario VARCHAR(50) NOT NULL DEFAULT CURRENT_USER,
     precio_anterior NUMERIC(10,2) NOT NULL,
     precio_nuevo NUMERIC(10,2) NOT NULL,
     fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -367,5 +367,4 @@ ON DELETE CASCADE;
 ALTER TABLE Composicion ADD CONSTRAINT fk_composicion_cepa
 FOREIGN KEY (id_cepa) REFERENCES Cepa(id_cepa)
 ON DELETE RESTRICT;
-
 
