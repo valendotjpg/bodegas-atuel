@@ -1,3 +1,14 @@
+/* 
+   Tipos y dominios
+*/
+CREATE TYPE estado_documento AS ENUM ('en_confeccion', 'terminado', 'procesado');
+CREATE DOMAIN cuit_dom AS CHAR(11)
+    CHECK (VALUE ~ '^[0-9]{11}$');
+
+/* 
+   Tablas
+*/
+
 CREATE TABLE Vino(
     cod_vino INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     anada SMALLINT NOT NULL,
@@ -6,7 +17,7 @@ CREATE TABLE Vino(
     precio NUMERIC(10,2) NOT NULL,
     graduacion NUMERIC(4,2) NOT NULL,
     volumen_ml INT NOT NULL,
-    cuit_bodega cuit_dom NOT NULL  
+    cuit_bodega cuit_dom NOT NULL REFERENCES Bodega(cuit_bodega) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 CREATE TABLE Bodega(
     cuit_bodega cuit_dom PRIMARY KEY,
