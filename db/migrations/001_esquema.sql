@@ -17,7 +17,7 @@ CREATE TABLE Vino(
     precio NUMERIC(10,2) NOT NULL,
     graduacion NUMERIC(4,2) NOT NULL,
     volumen_ml INT NOT NULL,
-    cuit_bodega cuit_dom NOT NULL REFERENCES Bodega(cuit_bodega) ON DELETE RESTRICT ON UPDATE CASCADE
+    cuit_bodega cuit_dom NOT NULL
 );
 CREATE TABLE Bodega(
     cuit_bodega cuit_dom PRIMARY KEY,
@@ -211,6 +211,7 @@ CREATE TABLE Transferencia_Vino(
 );
 CREATE TABLE Auditoria(
     id_auditoria SERIAL PRIMARY KEY,
+    cod_vino INT NOT NULL,
     usuario VARCHAR(50) NOT NULL,
     precio_anterior NUMERIC(10,2) NOT NULL,
     precio_nuevo NUMERIC(10,2) NOT NULL,
@@ -295,8 +296,8 @@ ALTER TABLE Exportador ADD CONSTRAINT fk_exportador_cliente
 FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
 ON DELETE CASCADE;
 
-ALTER TABLE Permiso_exportacion ADD CONSTRAINT fk_permiso_exportacion_cliente
-FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+ALTER TABLE Permiso_exportacion ADD CONSTRAINT fk_permiso_exportacion_exportador
+FOREIGN KEY (id_cliente) REFERENCES Exportador(id_cliente)
 ON DELETE CASCADE;
 
 ALTER TABLE Ingreso ADD CONSTRAINT fk_ingreso_bodega
@@ -356,7 +357,15 @@ FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
 ON DELETE RESTRICT;
 
 ALTER TABLE Auditoria ADD CONSTRAINT fk_auditoria_vino
-FOREIGN KEY cod_vino REFERENCES Vino(cod_vino)
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+ALTER TABLE Composicion ADD CONSTRAINT fk_composicion_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE CASCADE;
+
+ALTER TABLE Composicion ADD CONSTRAINT fk_composicion_cepa
+FOREIGN KEY (id_cepa) REFERENCES Cepa(id_cepa)
 ON DELETE RESTRICT;
 
 
