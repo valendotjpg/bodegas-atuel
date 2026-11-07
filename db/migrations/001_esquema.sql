@@ -9,6 +9,12 @@ CREATE DOMAIN cuit_dom AS CHAR(11)
    Tablas
 */
 
+CREATE TABLE Bodega(
+    cuit_bodega cuit_dom PRIMARY KEY,
+    razon_social VARCHAR(100) NOT NULL,
+    calle VARCHAR(50) NOT NULL,
+    numero INT NOT NULL
+);
 CREATE TABLE Vino(
     cod_vino INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     anada SMALLINT NOT NULL,
@@ -18,12 +24,6 @@ CREATE TABLE Vino(
     graduacion NUMERIC(4,2) NOT NULL,
     volumen_ml INT NOT NULL,
     cuit_bodega cuit_dom NOT NULL REFERENCES Bodega(cuit_bodega) ON DELETE RESTRICT ON UPDATE CASCADE
-);
-CREATE TABLE Bodega(
-    cuit_bodega cuit_dom PRIMARY KEY,
-    razon_social VARCHAR(100) NOT NULL,
-    calle VARCHAR(50) NOT NULL,
-    numero INT NOT NULL
 );
 CREATE TABLE Localidad(
     cod_postal INT PRIMARY KEY,
@@ -214,6 +214,7 @@ CREATE TABLE Auditoria(
     usuario VARCHAR(50) NOT NULL,
     precio_anterior NUMERIC(10,2) NOT NULL,
     precio_nuevo NUMERIC(10,2) NOT NULL,
+    cod_vino INT NOT NULL,
     fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 /*
