@@ -23,7 +23,7 @@ CREATE TABLE Vino(
     precio NUMERIC(10,2) NOT NULL,
     graduacion NUMERIC(4,2) NOT NULL,
     volumen_ml INT NOT NULL,
-    cuit_bodega cuit_dom NOT NULL REFERENCES Bodega(cuit_bodega) ON DELETE RESTRICT ON UPDATE CASCADE
+    cuit_bodega cuit_dom NOT NULL
 );
 CREATE TABLE Localidad(
     cod_postal INT PRIMARY KEY,
