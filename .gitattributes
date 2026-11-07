@@ -1,0 +1,9 @@
+# Todo el texto con LF: los .sh y .sql se ejecutan dentro del contenedor Linux.
+* text=auto eol=lf
+
+# Binarios
+*.png binary
+*.jpg binary
+*.pdf binary
+*.dump binary
+*.gz binary
