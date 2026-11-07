@@ -216,3 +216,147 @@ CREATE TABLE Auditoria(
     precio_nuevo NUMERIC(10,2) NOT NULL,
     fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+/*
+   Claves foráneas
+*/
+ALTER TABLE Vino ADD CONSTRAINT fk_vino_bodega 
+FOREIGN KEY (cuit_bodega) REFERENCES Bodega(cuit_bodega) 
+ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE Encargado ADD CONSTRAINT fk_encargado_localidad 
+FOREIGN KEY (cod_postal) REFERENCES Localidad(cod_postal) 
+ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE Sala_Venta ADD CONSTRAINT fk_sala_venta_localidad
+FOREIGN KEY (cod_postal) REFERENCES Localidad(cod_postal)
+ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE Empleado ADD CONSTRAINT fk_empleado_sala_venta
+FOREIGN KEY (id_sala) REFERENCES Sala_Venta(id_sala)
+ON DELETE RESTRICT;
+
+ALTER TABLE Parcela ADD CONSTRAINT fk_parcela_finca
+FOREIGN KEY (id_finca) REFERENCES Finca(id_finca)
+ON DELETE CASCADE;
+
+ALTER TABLE Parcela ADD CONSTRAINT fk_parcela_cepa
+FOREIGN KEY (id_cepa) REFERENCES Cepa(id_cepa)
+ON DELETE RESTRICT;
+
+ALTER TABLE Lote ADD CONSTRAINT fk_lote_bodega
+FOREIGN KEY (cuit_bodega) REFERENCES Bodega(cuit_bodega)
+ON DELETE RESTRICT;
+
+ALTER TABLE Lote ADD CONSTRAINT fk_lote_parcela
+FOREIGN KEY (id_finca, nro_parcela) REFERENCES Parcela(id_finca,nro_parcela)
+ON DELETE RESTRICT;
+
+ALTER TABLE Analisis_Calidad ADD CONSTRAINT fk_analisis_calidad_lote
+FOREIGN KEY (nro_lote) REFERENCES Lote(nro_lote)
+ON DELETE CASCADE;
+
+ALTER TABLE Vino_Maridaje ADD CONSTRAINT fk_vino_maridaje_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE CASCADE;
+
+ALTER TABLE Vino_Maridaje ADD CONSTRAINT fk_vino_maridaje_maridaje
+FOREIGN KEY (id_maridaje) REFERENCES Maridaje(id_maridaje)
+ON DELETE CASCADE;
+
+ALTER TABLE Comprobante ADD CONSTRAINT fk_comprobante_sala_venta
+FOREIGN KEY (id_sala) REFERENCES Sala_Venta(id_sala)
+ON DELETE RESTRICT;
+
+ALTER TABLE Comprobante ADD CONSTRAINT fk_comprobante_cliente
+FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+ON DELETE RESTRICT;
+
+ALTER TABLE Detalle_Comprobante ADD CONSTRAINT fk_detalle_comprobante_comprobante
+FOREIGN KEY (nro_comprobante) REFERENCES Comprobante(nro_comprobante)
+ON DELETE CASCADE;
+
+ALTER TABLE Detalle_Comprobante ADD CONSTRAINT fk_detalle_comprobante_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+ALTER TABLE Cliente ADD CONSTRAINT fk_cliente_localidad
+FOREIGN KEY (cod_postal) REFERENCES Localidad(cod_postal)
+ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE Socio ADD CONSTRAINT fk_socio_cliente
+FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+ON DELETE CASCADE;
+
+ALTER TABLE Distribuidor ADD CONSTRAINT fk_distribuidor_cliente
+FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+ON DELETE CASCADE;
+
+ALTER TABLE Exportador ADD CONSTRAINT fk_exportador_cliente
+FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+ON DELETE CASCADE;
+
+ALTER TABLE Permiso_exportacion ADD CONSTRAINT fk_permiso_exportacion_cliente
+FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+ON DELETE CASCADE;
+
+ALTER TABLE Ingreso ADD CONSTRAINT fk_ingreso_bodega
+FOREIGN KEY (cuit_bodega) REFERENCES Bodega(cuit_bodega)
+ON DELETE RESTRICT;
+
+ALTER TABLE Ingreso ADD CONSTRAINT fk_ingreso_transportista
+FOREIGN KEY (cod_transporte) REFERENCES Transportista(cod_transporte)
+ON DELETE RESTRICT;
+
+ALTER TABLE Ingreso_Vino ADD CONSTRAINT fk_ingreso_vino_ingreso
+FOREIGN KEY (cod_ingreso) REFERENCES Ingreso(cod_ingreso)
+ON DELETE CASCADE;
+
+ALTER TABLE Ingreso_Vino ADD CONSTRAINT fk_ingreso_vino_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+ALTER TABLE Transportista_Telefono ADD CONSTRAINT fk_telefono_transportista
+FOREIGN KEY (cod_transporte) REFERENCES Transportista(cod_transporte)
+ON DELETE CASCADE;
+
+ALTER TABLE Transportista_Localidad ADD CONSTRAINT fk_localidad_transportista
+FOREIGN KEY (cod_postal) REFERENCES Localidad(cod_postal)
+ON DELETE CASCADE;
+
+ALTER TABLE Transportista_Localidad ADD CONSTRAINT fk_transportista_localidad
+FOREIGN KEY (cod_transporte) REFERENCES Transportista(cod_transporte)
+ON DELETE CASCADE;
+
+ALTER TABLE Stock_Deposito ADD CONSTRAINT fk_stock_deposito_deposito
+FOREIGN KEY (id_deposito) REFERENCES Deposito_Central(id_deposito)
+ON DELETE CASCADE;
+
+ALTER TABLE Stock_Deposito ADD CONSTRAINT fk_stock_deposito_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+ALTER TABLE Transferencia ADD CONSTRAINT fk_transferencia_sala_venta
+FOREIGN KEY (id_sala) REFERENCES Sala_Venta(id_sala)
+ON DELETE RESTRICT;
+
+ALTER TABLE Transferencia_Vino ADD CONSTRAINT fk_transferencia_vino_transferencia
+FOREIGN KEY (nro_solicitud) REFERENCES Transferencia(nro_solicitud)
+ON DELETE CASCADE;
+
+ALTER TABLE Transferencia_Vino ADD CONSTRAINT fk_transferencia_vino_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+ALTER TABLE Sala_Venta_Vino ADD CONSTRAINT fk_sala_venta_vino_sala
+FOREIGN KEY (id_sala) REFERENCES Sala_Venta(id_sala)
+ON DELETE RESTRICT;
+
+ALTER TABLE Sala_Venta_Vino ADD CONSTRAINT fk_sala_venta_vino_vino
+FOREIGN KEY (cod_vino) REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+ALTER TABLE Auditoria ADD CONSTRAINT fk_auditoria_vino
+FOREIGN KEY cod_vino REFERENCES Vino(cod_vino)
+ON DELETE RESTRICT;
+
+
