@@ -1,7 +1,7 @@
 # Bodegas del Atuel
 
 TPI de Base de Datos, UTN FRSR, Ingenieria en Sistemas, 3.er anio, ciclo 2026.
-Sistema de gestion y distribucion de una empresa vitivinicola. Motor: PostgreSQL 14+.
+Sistema de gestion y distribucion de una empresa vitivinicola. Motor: PostgreSQL 16.
 Acceso a datos con SQL directo (sin ORM).
 
 ## Requisitos
@@ -14,23 +14,32 @@ Acceso a datos con SQL directo (sin ORM).
 
 ## Levantar la base en local
 
+Clonar el repo **fuera de OneDrive/Google Drive/Dropbox** (ej. `C:\dev\`):
+la sincronizacion rompe `.git` y los volumenes de Docker.
+
 ```bash
 cp .env.example .env      # completar las claves
 docker compose up -d
 docker compose logs -f db # ver que las migraciones corran sin errores
 ```
 
-Para recrear la base desde cero (borra los datos):
+Si ya tenes un PostgreSQL instalado en la PC usando el puerto 5432, cambia
+`POSTGRES_PORT` en el `.env` (ej. `5433`).
+
+Para recrear la base desde cero (borra los datos). Es obligatorio despues de
+que falle una migracion: la init corta en el primer error y, como el volumen ya
+existe, no vuelve a correr sola.
 
 ```bash
-docker compose down -v && docker compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ## Estructura
 
 | Carpeta | Contenido |
 |---|---|
-| `db/migrations/` | `001_esquema.sql` a `008_indices.sql`, en orden |
+| `db/migrations/` | `001_esquema.sql` a `008_indices.sql`, en orden (`007_roles.sh` es script porque lee la clave del `.env`) |
 | `db/seed/` | CSV de catalogos y script de carga masiva |
 | `tests/` | `db_tests.sql` (un caso por regla RN-01 a RN-15) |
 | `consultas/` | `insert.sql`, `update.sql`, `delete.sql`, `select.sql` |
@@ -55,16 +64,18 @@ docker compose down -v && docker compose up -d
 ## Flujo de trabajo
 
 - Una rama por etapa (`etapa-1-modelado`, `etapa-2-integridad`, ...).
-- Pull request con revision de otro integrante antes de integrar a `main`.
+- Pull request con revision de otro integrante antes de integrar a `main` (no se pushea directo a `main`).
 - Cada trigger lleva un comentario con la regla que protege (ej. `-- RN-09`).
 - La API y el front no calculan totales, descuentos ni stock: llaman a la base.
 - Nunca subir secretos. Usar `.env` (ignorado por git).
 
-## Equipo 
+## Equipo
+
 Grupo N°7:
-- *Mansalve Augusto*
-- *Praderio Valentin*
-- *Quiroga Constanza*
+
+- Mansalve Augusto
+- Praderio Valentin
+- Quiroga Constanza
 
 ## URL en la nube
 
