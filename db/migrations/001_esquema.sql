@@ -1,5 +1,5 @@
 CREATE TABLE Vino(
-    cod_vino SERIAL PRIMARY KEY,
+    cod_vino INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     anada SMALLINT NOT NULL,
     tipo VARCHAR(12) NOT NULL,
     nombre_comercial VARCHAR(80) NOT NULL,
@@ -20,13 +20,13 @@ CREATE TABLE Localidad(
     provincia VARCHAR(50) NOT NULL
 );
 CREATE TABLE Encargado(
-    id_encargado SERIAL PRIMARY KEY,
+    id_encargado INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     apellido VARCHAR(50) NOT NULL,
     cod_postal INT NOT NULL
 );
 CREATE TABLE Sala_Venta(
-    id_sala SERIAL PRIMARY KEY,
+    id_sala INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     calle VARCHAR(50) NOT NULL,
     numero INT NOT NULL,
     dia_cierre VARCHAR(20) NOT NULL,
@@ -47,14 +47,14 @@ CREATE TABLE Empleado(
     id_sala INT NOT NULL
 );
 CREATE TABLE Finca(
-    id_finca SERIAL PRIMARY KEY,
+    id_finca INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     superficie_ha NUMERIC(10,2) NOT NULL,
     departamento VARCHAR(50) NOT NULL,
     provincia VARCHAR(50) NOT NULL
 );
 CREATE TABLE Cepa(
-    id_cepa SERIAL PRIMARY KEY,
+    id_cepa INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     tipo VARCHAR(10) NOT NULL
 );
@@ -67,7 +67,7 @@ CREATE TABLE Parcela(
     PRIMARY KEY(id_finca, nro_parcela)
 );
 CREATE TABLE Lote(
-    nro_lote SERIAL PRIMARY KEY,
+    nro_lote INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     campania SMALLINT NOT NULL,
     fecha_cosecha DATE NOT NULL,
     kilos NUMERIC(10,2) NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE Lote(
     nro_parcela INT NOT NULL
 );
 CREATE TABLE Analisis_Calidad(
-    id_analisis SERIAL PRIMARY KEY,
+    id_analisis INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fecha DATE NOT NULL,
     grado_brix NUMERIC(4,2) NOT NULL,
     ph NUMERIC(4,2) NOT NULL,
@@ -86,12 +86,18 @@ CREATE TABLE Analisis_Calidad(
 CREATE TABLE Composicion(
     cod_vino INT NOT NULL,
     id_cepa INT NOT NULL,
-    porcentaje NUMERIC(5,2) NOT NULL
+    porcentaje NUMERIC(5,2) NOT NULL,
+    PRIMARY KEY(cod_vino, id_cepa)
 );
 CREATE TABLE Maridaje(
-    id_maridaje SERIAL PRIMARY KEY,
+    id_maridaje INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     temperatura_servicio NUMERIC(4,2) NOT NULL
+);
+CREATE TABLE Vino_Maridaje(
+    cod_vino INT NOT NULL,
+    id_maridaje INT NOT NULL,
+    PRIMARY KEY(cod_vino, id_maridaje)
 );
 CREATE TABLE Cliente(
     id_cliente SERIAL PRIMARY KEY,
@@ -111,10 +117,14 @@ CREATE TABLE Distribuidor(
     zona_cobertura VARCHAR(50) NOT NULL,
     nro_habilitacion VARCHAR(20) NOT NULL
 );
+CREATE TABLE Exportador(
+    id_cliente INT PRIMARY KEY,
+    pais_destino VARCHAR(50) NOT NULL
+);
 CREATE TABLE Permiso_exportacion(
     cod_permiso SERIAL PRIMARY KEY,
     fecha_emision DATE NOT NULL,
-    fecha_vencimiento DATE NOT NULL
+    fecha_vencimiento DATE NOT NULL,
     id_cliente INT NOT NULL
 );
 CREATE TABLE Comprobante(
@@ -129,7 +139,6 @@ CREATE TABLE Comprobante(
 CREATE TABLE Detalle_Comprobante(
     nro_comprobante INT NOT NULL,
     cod_vino INT NOT NULL,
-    cantidad INT NOT NULL,
     cantidad INT NOT NULL,
     precio_unitario NUMERIC(10,2) NOT NULL,
     descuento_aplicado NUMERIC(5,2) NOT NULL,
