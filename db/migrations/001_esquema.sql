@@ -141,8 +141,8 @@ CREATE TABLE Permiso_exportacion(
 CREATE TABLE Comprobante(
     nro_comprobante SERIAL PRIMARY KEY,
     fecha DATE NOT NULL,
-    subtotal NUMERIC(12,2) NOT NULL,
-    descuento NUMERIC(12,2) NOT NULL,
+    subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+    descuento NUMERIC(12,2) NOT NULL DEFAULT 0,
     total NUMERIC(12,2) NOT NULL,
     id_sala INT NOT NULL,
     id_cliente INT NOT NULL
@@ -176,7 +176,7 @@ CREATE TABLE Transportista_Localidad(
 );
 CREATE TABLE Ingreso(
     cod_ingreso SERIAL PRIMARY KEY,
-    estado estado_documento NOT NULL,
+    estado estado_documento NOT NULL DEFAULT 'en_confeccion',
     fecha_ingreso DATE DEFAULT CURRENT_DATE,
     cuit_bodega cuit_dom NOT NULL,
     cod_transporte INT NOT NULL
@@ -211,7 +211,7 @@ CREATE TABLE Transferencia_Vino(
 );
 CREATE TABLE Auditoria(
     id_auditoria SERIAL PRIMARY KEY,
-    usuario VARCHAR(50) NOT NULL,
+    usuario VARCHAR(50) NOT NULL DEFAULT CURRENT_USER,
     precio_anterior NUMERIC(10,2) NOT NULL,
     precio_nuevo NUMERIC(10,2) NOT NULL,
     cod_vino INT NOT NULL,
