@@ -15,7 +15,7 @@ ALTER TABLE Vino
 ADD CONSTRAINT check_volumen_ml CHECK (volumen_ml IN (187, 375, 750, 1000, 1500));
 
 ALTER TABLE Vino
-ADD CONSTRAINT unique_nombre UNIQUE (nombre, anada, volumen_ml);
+ADD CONSTRAINT unique_nombre UNIQUE (nombre_comercial, anada, volumen_ml);
 
 ALTER TABLE Vino
 ADD CONSTRAINT check_tipo CHECK (tipo IN ('Tinto', 'Blanco', 'Rosado', 'Espumante'));
@@ -69,7 +69,7 @@ ALTER TABLE Composicion
 ADD CONSTRAINT check_porcentaje CHECK (porcentaje > 0 AND porcentaje <= 100);
 
 ALTER TABLE Maridaje
-ADD CONSTRAINT unique_nombre UNIQUE (nombre);
+ADD CONSTRAINT unique_nombre_maridaje UNIQUE (nombre_maridaje);
 
 ALTER TABLE Maridaje
 ADD CONSTRAINT check_temperatura_servicio CHECK (temperatura_servicio BETWEEN 0 AND 30);
@@ -136,7 +136,6 @@ ADD CONSTRAINT check_precio_anterior CHECK (precio_anterior > 0);
 
 ALTER TABLE Auditoria
 ADD CONSTRAINT check_precio_nuevo CHECK (precio_nuevo > 0);
-
 
 
 
