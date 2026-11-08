@@ -10,6 +10,9 @@ services:
       # Los usa db/migrations/007_roles.sql para crear el rol de la API.
       API_DB_USER: ${API_DB_USER}
       API_DB_PASSWORD: ${API_DB_PASSWORD}
+      # Los usa db/migrations/007_roles.sql para crear el rol de reportes.
+      REPORT_DB_USER: ${REPORT_DB_USER}
+      REPORT_DB_PASSWORD: ${REPORT_DB_PASSWORD}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
