@@ -96,3 +96,15 @@ La comparación real con 10.000 filas fue:
 El dump generado fue validado con `gzip -t` y permanece ignorado por Git.
 La ejecución de escala completa debe realizarse sobre una base vacía, porque
 el cargador inserta los catálogos y no debe duplicarlos.
+
+## Pruebas de reglas de negocio
+
+Con una base inicializada y una carga de fixture, se ejecuta:
+
+```bash
+psql "$DATABASE_URL" -f tests/db_tests.sql
+```
+
+La suite crea datos de prueba dentro de una transacción, valida RN-01 a
+RN-15, informa `PASS` para cada regla y hace `ROLLBACK` al finalizar. La
+ejecución verificada produjo 15/15 reglas aprobadas.
