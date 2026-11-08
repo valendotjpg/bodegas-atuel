@@ -367,4 +367,3 @@ ON DELETE CASCADE;
 ALTER TABLE Composicion ADD CONSTRAINT fk_composicion_cepa
 FOREIGN KEY (id_cepa) REFERENCES Cepa(id_cepa)
 ON DELETE RESTRICT;
-

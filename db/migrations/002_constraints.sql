@@ -139,4 +139,3 @@ ADD CONSTRAINT check_precio_nuevo CHECK (precio_nuevo > 0);
 
 
 
-
