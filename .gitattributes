@@ -1,4 +1,4 @@
-# Todo el texto con LF: los .sh y .sql se ejecutan dentro del contenedor Linux.
+# Todo el texto con LF: los .sql se ejecutan dentro del contenedor Linux.
 * text=auto eol=lf
 
 # Binarios

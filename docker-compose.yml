@@ -7,14 +7,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # Los usa db/migrations/007_roles.sh para crear el rol de la API.
+      # Los usa db/migrations/007_roles.sql para crear el rol de la API.
       API_DB_USER: ${API_DB_USER}
       API_DB_PASSWORD: ${API_DB_PASSWORD}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Los .sql y .sh de esta carpeta corren en orden alfabetico (001, 002, ...)
+      # Los .sql de esta carpeta corren en orden alfabetico (001, 002, ...)
       # solo la PRIMERA vez que se crea el volumen. Si una falla, la init se
       # corta y hay que recrear el volumen (docker compose down -v).
       - ./db/migrations:/docker-entrypoint-initdb.d:ro
