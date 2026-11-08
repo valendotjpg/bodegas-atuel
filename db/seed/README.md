@@ -9,7 +9,7 @@ con la fila de encabezado.
 | Archivo | Tabla destino | Filas | Fuente |
 |---|---|---|---|
 | `cepas.csv` | `Cepa (nombre, tipo)` | 12 | Anexo B.1 |
-| `maridajes.csv` | `Maridaje (nombre, temperatura_servicio)` | 8 | Anexo B.2 (temperaturas orientativas) |
+| `maridajes.csv` | `Maridaje (nombre_maridaje, temperatura_servicio)` | 8 | Anexo B.2 (temperaturas orientativas) |
 | `departamentos.csv` | — (lo usa el generador para `Finca.departamento`) | 18 | Anexo B.3 |
 | `localidades.csv` | `Localidad (cod_postal, nombre, provincia)` | 24 | Cabecera de cada departamento y localidades vitivinícolas |
 | `tipos_vino.csv` | — (valores válidos de `Vino.tipo`) | 4 | Anexo B.4 |
