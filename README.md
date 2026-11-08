@@ -41,7 +41,7 @@ docker compose up -d
 |---|---|
 | `db/migrations/` | `001_esquema.sql` a `008_indices.sql`, en orden (`007_roles.sql` lee las claves de API y reportes del `.env`) |
 | `db/seed/` | CSV de catalogos y script de carga masiva |
-| `tests/` | `db_tests.sql` (un caso por regla RN-01 a RN-15) |
+| `tests/` | `db_tests.sql` (un caso por regla RN-01 a RN-15) y `db_tests_roles.sql` (privilegios de cada rol) |
 | `consultas/` | `insert.sql`, `update.sql`, `delete.sql`, `select.sql` |
 | `api/` | API REST |
 | `front/` | Front |
