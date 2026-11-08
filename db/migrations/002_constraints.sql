@@ -15,7 +15,7 @@ ALTER TABLE Vino
 ADD CONSTRAINT check_volumen_ml CHECK (volumen_ml IN (187, 375, 750, 1000, 1500));
 
 ALTER TABLE Vino
-ADD CONSTRAINT unique_nombre UNIQUE (nombre, anada, volumen_ml);
+ADD CONSTRAINT unique_nombre UNIQUE (nombre_comercial, anada, volumen_ml);
 
 ALTER TABLE Vino
 ADD CONSTRAINT check_tipo CHECK (tipo IN ('Tinto', 'Blanco', 'Rosado', 'Espumante'));
