@@ -9,7 +9,7 @@ con la fila de encabezado.
 | Archivo | Tabla destino | Filas | Fuente |
 |---|---|---|---|
 | `cepas.csv` | `Cepa (nombre, tipo)` | 12 | Anexo B.1 |
-| `maridajes.csv` | `Maridaje (nombre, temperatura_servicio)` | 8 | Anexo B.2 (temperaturas orientativas) |
+| `maridajes.csv` | `Maridaje (nombre_maridaje, temperatura_servicio)` | 8 | Anexo B.2 (temperaturas orientativas) |
 | `departamentos.csv` | — (lo usa el generador para `Finca.departamento`) | 18 | Anexo B.3 |
 | `localidades.csv` | `Localidad (cod_postal, nombre, provincia)` | 24 | Cabecera de cada departamento y localidades vitivinícolas |
 | `tipos_vino.csv` | — (valores válidos de `Vino.tipo`) | 4 | Anexo B.4 |
@@ -35,4 +35,52 @@ conviene verificarlos en el buscador oficial: https://www.correoargentino.com.ar
 ## Datos ficticios
 
 Bodegas, fincas, clientes, transportistas, empleados y movimientos se generan
-con Faker y una semilla fija (pendiente: `generar.py`).
+con Faker y una semilla fija en [`generar.py`](generar.py). La escala por
+defecto cumple los mínimos de la consigna: 20.000 clientes, 150.000
+comprobantes y 600.000 renglones de comprobante, además de filas en todas las
+tablas.
+
+El orden de dependencias, los volúmenes, los riesgos y los comandos de backup
+están documentados en [`informe_carga.md`](informe_carga.md).
+
+### Ejecución
+
+Instalar las dependencias fuera del repositorio y ejecutar contra una base ya
+inicializada:
+
+```bash
+python -m pip install "psycopg[binary]" Faker
+python db/seed/generar.py --dsn "$DATABASE_URL"
+```
+
+`--seed` conserva la reproducibilidad. Para una prueba rápida se pueden
+reducir `--clientes`, `--comprobantes` y el resto de parámetros de volumen.
+La carga parte de una base vacía (para reiniciarla con Docker usar
+`docker compose down -v` y luego `docker compose up -d`).
+La carga usa `COPY` y lotes de 1.000 filas; el tiempo total se imprime al
+finalizar.
+
+Para registrar la comparación pedida entre inserción fila a fila y carga por
+lotes:
+
+```bash
+python db/seed/medir_carga.py --dsn "$DATABASE_URL" --filas 10000
+```
+
+El script informa ambos tiempos y la mejora de `COPY` sobre
+`executemany`.
+
+Durante la carga se deshabilitan únicamente los triggers de usuario de las
+tablas históricas (`ALTER TABLE ... DISABLE TRIGGER USER`). Las claves
+foráneas y restricciones `CHECK` permanecen activas. Se vuelven a habilitar
+en un bloque `finally`; después deben ejecutarse [`controles.sql`](controles.sql).
+Esto permite cargar comprobantes históricos sin ejecutar descuentos ni
+descontar stock nuevamente, pero exige que los controles validen los importes y
+stocks generados por el script.
+
+Los catálogos se cargan desde los CSV y no se generan al azar. Para cargar
+solamente esos archivos:
+
+```bash
+python db/seed/cargar_catalogos.py --dsn "$DATABASE_URL"
+```

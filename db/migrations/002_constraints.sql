@@ -12,7 +12,7 @@ ALTER TABLE Vino
 ADD CONSTRAINT check_graduacion CHECK (graduacion BETWEEN 5 AND 20);
 
 ALTER TABLE Vino
-ADD CONSTRAINT check_volumen_ml CHECK (volumen_ml IN (187, 375, 750, 1000, 1500));
+ADD CONSTRAINT check_volumen_ml CHECK (volumen_ml IN (187, 375, 750, 1500, 3000));
 
 ALTER TABLE Vino
 ADD CONSTRAINT unique_nombre UNIQUE (nombre_comercial, anada, volumen_ml);
@@ -136,7 +136,5 @@ ADD CONSTRAINT check_precio_anterior CHECK (precio_anterior > 0);
 
 ALTER TABLE Auditoria
 ADD CONSTRAINT check_precio_nuevo CHECK (precio_nuevo > 0);
-
-
 
 
