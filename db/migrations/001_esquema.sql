@@ -102,7 +102,7 @@ CREATE TABLE Composicion(
 );
 CREATE TABLE Maridaje(
     id_maridaje INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
+    nombre_maridaje VARCHAR(50) NOT NULL,
     temperatura_servicio NUMERIC(4,2) NOT NULL
 );
 CREATE TABLE Vino_Maridaje(
@@ -367,4 +367,3 @@ ON DELETE CASCADE;
 ALTER TABLE Composicion ADD CONSTRAINT fk_composicion_cepa
 FOREIGN KEY (id_cepa) REFERENCES Cepa(id_cepa)
 ON DELETE RESTRICT;
-
