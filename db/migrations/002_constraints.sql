@@ -69,7 +69,7 @@ ALTER TABLE Composicion
 ADD CONSTRAINT check_porcentaje CHECK (porcentaje > 0 AND porcentaje <= 100);
 
 ALTER TABLE Maridaje
-ADD CONSTRAINT unique_nombre_maridaje UNIQUE (nombre_maridaje);
+ADD CONSTRAINT unique_nombre_maridaje UNIQUE (nombre);
 
 ALTER TABLE Maridaje
 ADD CONSTRAINT check_temperatura_servicio CHECK (temperatura_servicio BETWEEN 0 AND 30);
