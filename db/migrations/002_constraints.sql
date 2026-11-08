@@ -6,7 +6,7 @@ ALTER TABLE Vino
 ADD CONSTRAINT check_anada CHECK (anada BETWEEN 1990 AND 2100);
 
 ALTER TABLE Vino
-ADD CONSTRAINT check_precio CHECK (precio >= 0);
+ADD CONSTRAINT check_precio CHECK (precio > 0);
 
 ALTER TABLE Vino
 ADD CONSTRAINT check_graduacion CHECK (graduacion BETWEEN 5 AND 20);
@@ -136,5 +136,4 @@ ADD CONSTRAINT check_precio_anterior CHECK (precio_anterior > 0);
 
 ALTER TABLE Auditoria
 ADD CONSTRAINT check_precio_nuevo CHECK (precio_nuevo > 0);
-
 
