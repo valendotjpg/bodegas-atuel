@@ -1,11 +1,7 @@
-/*
-   Triggers. Cada uno cita la regla de negocio que protege.
-   Las funciones de trigger llevan el prefijo fn_trg_ para no confundirlas
-   con las funciones de cálculo del 003.
-*/
+-- Triggers. Cada uno indica la regla de negocio que protege.
 
 
--- RN-08: el comprobante nace con importes en 0. Los calcula el trigger de renglones, no se cargan a mano.
+-- RN-08: el comprobante nace con importes en 0
 CREATE FUNCTION fn_trg_comprobante_inicial()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -24,8 +20,7 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_trg_comprobante_inicial();
 
 
--- RN-09, RN-06, RN-08: rechaza la venta si no hay stock en la sala y completa precio, descuento y subtotal del renglón.
--- La fila de stock queda bloqueada (FOR UPDATE) hasta el fin de la transacción: otra venta del mismo vino en la misma sala espera.
+-- RN-06, RN-08, RN-09: valida stock (bloquea la fila con FOR UPDATE) y completa precio, descuento y subtotal
 CREATE FUNCTION fn_trg_detalle_validar()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -85,7 +80,7 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_trg_detalle_validar();
 
 
--- RN-08, RN-09: descuenta el stock de la sala y recalcula subtotal, descuento y total del comprobante.
+-- RN-08, RN-09: descuenta stock y recalcula los importes del comprobante
 CREATE FUNCTION fn_trg_detalle_aplicar()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -128,7 +123,7 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_trg_detalle_aplicar();
 
 
--- RN-10, RN-11: un ingreso o una transferencia nace en confección y solo avanza en_confeccion → terminado → procesado.
+-- RN-10, RN-11: nace en confeccion y solo avanza en_confeccion -> terminado -> procesado
 CREATE FUNCTION fn_trg_control_estado()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -166,8 +161,7 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_trg_control_estado();
 
 
--- RN-12: los renglones de un ingreso o de una transferencia solo se agregan, modifican o quitan mientras está en confección.
--- El documento queda bloqueado (FOR SHARE) para que no cambie de estado mientras se tocan sus renglones.
+-- RN-12: los renglones solo se modifican si el documento esta en confeccion (FOR SHARE evita que cambie de estado)
 CREATE FUNCTION fn_trg_bloqueo_renglones()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -199,8 +193,8 @@ BEGIN
         END IF;
 
         IF FOUND AND v_estado <> 'en_confeccion' THEN
-            RAISE EXCEPTION 'El % % está %: no admite cambios en sus renglones (RN-12)',
-                CASE TG_TABLE_NAME WHEN 'ingreso_vino' THEN 'ingreso' ELSE 'transferencia' END,
+            RAISE EXCEPTION '% % está en estado %: no admite cambios en sus renglones (RN-12)',
+                CASE TG_TABLE_NAME WHEN 'ingreso_vino' THEN 'El ingreso' ELSE 'La transferencia' END,
                 v_doc, v_estado
                 USING ERRCODE = 'object_not_in_prerequisite_state';
         END IF;
@@ -224,7 +218,7 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_trg_bloqueo_renglones();
 
 
--- RN-11: la fecha de confección de una transferencia es la actual y no se puede modificar.
+-- RN-11: la fecha de la transferencia es la actual y no se modifica
 CREATE FUNCTION fn_trg_transferencia_fecha()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -247,9 +241,8 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_trg_transferencia_fecha();
 
 
--- RN-13: todo cambio de precio de un vino queda auditado (fecha, usuario, precio anterior y nuevo).
--- SECURITY DEFINER: escribe en Auditoria con los permisos del dueño, así la API no necesita permiso sobre esa tabla.
--- session_user guarda el usuario que se conectó (con SECURITY DEFINER, current_user sería el dueño).
+-- RN-13: audita cada cambio de precio. SECURITY DEFINER: la API no necesita permiso sobre Auditoria
+-- session_user registra al usuario conectado
 CREATE FUNCTION fn_trg_auditar_precio()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -271,8 +264,7 @@ WHEN (OLD.precio IS DISTINCT FROM NEW.precio)
 EXECUTE FUNCTION fn_trg_auditar_precio();
 
 
--- RN-05: al cerrar la transacción, los porcentajes de corte de cada vino suman exactamente 100.
--- Es diferido para poder cargar los renglones de la composición de a uno dentro de la misma transacción.
+-- RN-05: al cerrar la transaccion, los porcentajes de corte de cada vino suman 100 (diferido)
 CREATE FUNCTION fn_trg_composicion_100()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -291,7 +283,7 @@ BEGIN
           FROM Composicion
          WHERE cod_vino = v_vino;
 
-        -- Sin filas (por ejemplo, se borró el vino) no hay nada que controlar.
+        -- Sin filas no hay nada que controlar
         IF v_suma IS NOT NULL AND v_suma <> 100 THEN
             RAISE EXCEPTION 'Los porcentajes de corte del vino % suman % y tienen que sumar 100 (RN-05)',
                 v_vino, v_suma
