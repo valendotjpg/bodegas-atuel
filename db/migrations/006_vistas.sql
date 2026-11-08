@@ -35,7 +35,7 @@ SELECT 'Ingreso' AS tipo_documento,
         iv.cantidad
    FROM Ingreso i
     JOIN Ingreso_Vino iv ON i.cod_ingreso = iv.cod_ingreso
-    WHERE i.estado <> 'Procesado'
+    WHERE i.estado <> 'procesado'
 UNION ALL
 SELECT 'Transferencia' AS tipo_documento,
         t.nro_solicitud AS nro_documento,
@@ -44,7 +44,7 @@ SELECT 'Transferencia' AS tipo_documento,
         t.cantidad
    FROM Transferencia t
     JOIN Transferencia_Vino tv ON t.nro_solicitud = tv.nro_solicitud
-    WHERE t.estado <> 'Procesado';
+    WHERE t.estado <> 'procesado';
 
 
 
