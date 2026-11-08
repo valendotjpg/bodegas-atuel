@@ -41,7 +41,7 @@ SELECT 'Transferencia' AS tipo_documento,
         t.nro_solicitud AS nro_documento,
         t.fecha,
         tv.cod_vino,
-        t.cantidad
+        tv.cantidad
    FROM Transferencia t
     JOIN Transferencia_Vino tv ON t.nro_solicitud = tv.nro_solicitud
     WHERE t.estado <> 'procesado';
