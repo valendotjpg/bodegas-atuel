@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from psycopg import Error as PsycopgError
@@ -21,18 +21,26 @@ from repositories import (
     delete_wine,
     get_client,
     get_receipt,
+    get_transfer,
     get_wine,
     health,
+    list_bodegas,
+    list_cepas,
     list_clients,
+    list_depositos,
+    list_maridajes,
+    list_salas,
+    list_transfers,
     list_wines,
     process_income,
     process_transfer,
     report_pending,
     report_sales_by_room,
-    report_stock,
     report_top_wines,
     report_traceability,
     report_transport_active,
+    report_wines_without_stock,
+    transition_income,
     transition_transfer,
     update_client,
     update_wine,
@@ -135,9 +143,10 @@ def clients(
     pool: Pool,
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    q: str | None = Query(default=None, min_length=1, max_length=50),
 ):
     with connection(pool) as conn:
-        return list_clients(conn, limit, offset)
+        return list_clients(conn, limit, offset, q)
 
 
 @app.get("/clientes/{client_id}")
@@ -193,6 +202,27 @@ def receipt(receipt_id: int, pool: Pool):
     return result
 
 
+@app.get("/transferencias")
+def transfers(
+    pool: Pool,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    estado: Literal["en_confeccion", "terminado", "procesado"] | None = None,
+    id_sala: int | None = Query(default=None, gt=0),
+):
+    with connection(pool) as conn:
+        return list_transfers(conn, limit, offset, estado, id_sala)
+
+
+@app.get("/transferencias/{transfer_id}")
+def transfer(transfer_id: int, pool: Pool):
+    with connection(pool) as conn:
+        result = get_transfer(conn, transfer_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Transferencia no encontrada")
+    return result
+
+
 @app.post("/transferencias", status_code=201)
 def create_transfer_endpoint(payload: DocumentCreate, pool: Pool):
     if payload.id_sala is None:
@@ -214,7 +244,9 @@ def transfer_line(transfer_id: int, payload: DocumentLine, pool: Pool):
 def finish_transfer(transfer_id: int, pool: Pool):
     with connection(pool) as conn:
         with conn.transaction():
-            transition_transfer(conn, transfer_id, "terminado")
+            found = transition_transfer(conn, transfer_id, "terminado")
+    if not found:
+        raise HTTPException(status_code=404, detail="Transferencia no encontrada")
     return {"status": "terminado", "nro_solicitud": transfer_id}
 
 
@@ -247,7 +279,9 @@ def income_line(income_id: int, payload: DocumentLine, pool: Pool):
 def finish_income(income_id: int, pool: Pool):
     with connection(pool) as conn:
         with conn.transaction():
-            conn.execute("UPDATE ingreso SET estado = %s WHERE cod_ingreso = %s", ("terminado", income_id))
+            found = transition_income(conn, income_id, "terminado")
+    if not found:
+        raise HTTPException(status_code=404, detail="Ingreso no encontrado")
     return {"status": "terminado", "cod_ingreso": income_id}
 
 
@@ -272,9 +306,9 @@ def sales_by_room(pool: Pool):
 
 
 @app.get("/reportes/vinos-sin-stock")
-def wines_without_stock(pool: Pool):
+def wines_without_stock(pool: Pool, id_sala: int = Query(gt=0)):
     with connection(pool) as conn:
-        return [row for row in report_stock(conn) if row["stock_total"] == 0]
+        return report_wines_without_stock(conn, id_sala)
 
 
 @app.get("/reportes/transportista-activo")
@@ -287,3 +321,33 @@ def active_carriers(pool: Pool):
 def traceability(cod_vino: int, pool: Pool):
     with connection(pool) as conn:
         return report_traceability(conn, cod_vino)
+
+
+@app.get("/cepas")
+def cepas(pool: Pool):
+    with connection(pool) as conn:
+        return list_cepas(conn)
+
+
+@app.get("/bodegas")
+def bodegas(pool: Pool):
+    with connection(pool) as conn:
+        return list_bodegas(conn)
+
+
+@app.get("/maridajes")
+def maridajes(pool: Pool):
+    with connection(pool) as conn:
+        return list_maridajes(conn)
+
+
+@app.get("/salas")
+def salas(pool: Pool):
+    with connection(pool) as conn:
+        return list_salas(conn)
+
+
+@app.get("/depositos")
+def depositos(pool: Pool):
+    with connection(pool) as conn:
+        return list_depositos(conn)

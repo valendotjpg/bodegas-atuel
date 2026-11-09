@@ -63,7 +63,7 @@ BEGIN
     IF v_stock < NEW.cantidad THEN
         RAISE EXCEPTION 'Stock insuficiente del vino % en la sala %: hay %, se piden % (RN-09)',
             NEW.cod_vino, v_id_sala, v_stock, NEW.cantidad
-            USING ERRCODE = 'check_violation';
+            USING ERRCODE = 'raise_exception';
     END IF;
 
     NEW.precio_unitario    := v_precio;
@@ -135,7 +135,7 @@ BEGIN
         IF NEW.estado <> 'en_confeccion' THEN
             RAISE EXCEPTION 'Un documento de % se crea en confección, no en % (RN-10, RN-11)',
                 TG_TABLE_NAME, NEW.estado
-                USING ERRCODE = 'object_not_in_prerequisite_state';
+                USING ERRCODE = 'raise_exception';
         END IF;
 
     ELSIF NEW.estado IS DISTINCT FROM OLD.estado
@@ -143,7 +143,7 @@ BEGIN
           AND NOT (OLD.estado = 'terminado'     AND NEW.estado = 'procesado') THEN
         RAISE EXCEPTION 'Transición de estado no permitida en %: % → % (RN-10, RN-11)',
             TG_TABLE_NAME, OLD.estado, NEW.estado
-            USING ERRCODE = 'object_not_in_prerequisite_state';
+            USING ERRCODE = 'raise_exception';
     END IF;
 
     RETURN NEW;
@@ -196,7 +196,7 @@ BEGIN
             RAISE EXCEPTION '% % está en estado %: no admite cambios en sus renglones (RN-12)',
                 CASE TG_TABLE_NAME WHEN 'ingreso_vino' THEN 'El ingreso' ELSE 'La transferencia' END,
                 v_doc, v_estado
-                USING ERRCODE = 'object_not_in_prerequisite_state';
+                USING ERRCODE = 'raise_exception';
         END IF;
     END LOOP;
 
@@ -228,7 +228,7 @@ BEGIN
         NEW.fecha := CURRENT_DATE;
     ELSIF NEW.fecha IS DISTINCT FROM OLD.fecha THEN
         RAISE EXCEPTION 'La fecha de la transferencia % no se puede modificar (RN-11)', OLD.nro_solicitud
-            USING ERRCODE = 'object_not_in_prerequisite_state';
+            USING ERRCODE = 'raise_exception';
     END IF;
 
     RETURN NEW;
@@ -287,7 +287,7 @@ BEGIN
         IF v_suma IS NOT NULL AND v_suma <> 100 THEN
             RAISE EXCEPTION 'Los porcentajes de corte del vino % suman % y tienen que sumar 100 (RN-05)',
                 v_vino, v_suma
-                USING ERRCODE = 'check_violation';
+                USING ERRCODE = 'raise_exception';
         END IF;
     END LOOP;
 
