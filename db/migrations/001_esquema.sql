@@ -112,7 +112,9 @@ CREATE TABLE Vino_Maridaje(
 );
 CREATE TABLE Cliente(
     id_cliente SERIAL PRIMARY KEY,
-    razon_social VARCHAR(100) NOT NULL,
+    apellido VARCHAR(50),
+    nombre VARCHAR(50),
+    razon_social VARCHAR(100),
     tipo_documento VARCHAR(10) NOT NULL,
     nro_documento VARCHAR(20) NOT NULL,
     fecha_alta DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -121,16 +123,19 @@ CREATE TABLE Cliente(
     cod_postal INT NOT NULL
 );
 CREATE TABLE Socio(
-    id_cliente INT PRIMARY KEY
+    id_cliente INT PRIMARY KEY,
+    porcentaje_descuento NUMERIC(5,2) NOT NULL DEFAULT 10
 );
 CREATE TABLE Distribuidor(
     id_cliente INT PRIMARY KEY,
     zona_cobertura VARCHAR(50) NOT NULL,
-    nro_habilitacion VARCHAR(20) NOT NULL
+    nro_habilitacion VARCHAR(20) NOT NULL,
+    porcentaje_descuento NUMERIC(5,2) NOT NULL DEFAULT 20
 );
 CREATE TABLE Exportador(
     id_cliente INT PRIMARY KEY,
-    pais_destino VARCHAR(50) NOT NULL
+    pais_destino VARCHAR(50) NOT NULL,
+    porcentaje_descuento NUMERIC(5,2) NOT NULL DEFAULT 30
 );
 CREATE TABLE Permiso_exportacion(
     cod_permiso SERIAL PRIMARY KEY,
@@ -177,7 +182,7 @@ CREATE TABLE Transportista_Localidad(
 CREATE TABLE Ingreso(
     cod_ingreso SERIAL PRIMARY KEY,
     estado estado_documento NOT NULL DEFAULT 'en_confeccion',
-    fecha_ingreso DATE DEFAULT CURRENT_DATE,
+    fecha_ingreso DATE NOT NULL DEFAULT CURRENT_DATE,
     cuit_bodega cuit_dom NOT NULL,
     cod_transporte INT NOT NULL
 );
@@ -199,8 +204,8 @@ CREATE TABLE Stock_Deposito(
 );
 CREATE TABLE Transferencia(
     nro_solicitud SERIAL PRIMARY KEY,
-    estado estado_documento NOT NULL,
-    fecha DATE DEFAULT CURRENT_DATE,
+    estado estado_documento NOT NULL DEFAULT 'en_confeccion',
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
     id_sala INT NOT NULL
 );
 CREATE TABLE Transferencia_Vino(
@@ -215,7 +220,7 @@ CREATE TABLE Auditoria(
     usuario VARCHAR(50) NOT NULL DEFAULT CURRENT_USER,
     precio_anterior NUMERIC(10,2) NOT NULL,
     precio_nuevo NUMERIC(10,2) NOT NULL,
-    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 /*
    Claves foráneas

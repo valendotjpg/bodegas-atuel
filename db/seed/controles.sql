@@ -19,9 +19,18 @@ UNION ALL
 SELECT 'totales_incorrectos', COUNT(*)
 FROM Comprobante c
 WHERE c.total <> c.subtotal - c.descuento
-   OR c.subtotal <> COALESCE((SELECT SUM(subtotal_renglon)
+   OR c.total <> fn_total_comprobante(c.nro_comprobante)
+   OR c.subtotal <> COALESCE((SELECT SUM(ROUND(d.cantidad * d.precio_unitario, 2))
                               FROM Detalle_Comprobante d
-                              WHERE d.nro_comprobante = c.nro_comprobante), 0);
+                              WHERE d.nro_comprobante = c.nro_comprobante), 0)
+UNION ALL
+SELECT 'descuento_distinto_al_tipo_de_cliente', COUNT(*)
+FROM Detalle_Comprobante d JOIN Comprobante c USING (nro_comprobante)
+WHERE d.descuento_aplicado <> fn_descuento_cliente(c.id_cliente)
+UNION ALL
+SELECT 'subtotal_renglon_incorrecto', COUNT(*)
+FROM Detalle_Comprobante
+WHERE subtotal_renglon <> ROUND(cantidad * precio_unitario * (1 - descuento_aplicado / 100), 2);
 
 SELECT cod_vino, SUM(porcentaje) AS porcentaje_total
 FROM Composicion

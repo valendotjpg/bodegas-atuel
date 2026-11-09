@@ -32,7 +32,7 @@ movimientos y comprobantes se generan con Faker y `random`, usando la semilla
 | Localidad, Cepa, Maridaje | 24, 12, 8 |
 | Bodega, Transportista | 20, 30 |
 | Sala de venta, Finca, Empleado | 30, 50, 60 |
-| Parcela, Vino, Composición, Vino-Maridaje | 500, 500, 500, 500 |
+| Parcela, Vino, Composición, Vino-Maridaje | 1.000, 500, 500, 500 |
 | Stock de depósito | 500 |
 | Ingreso, Transferencia | 5.000, 5.000 |
 | Lote, Análisis de calidad | 5.000, 5.000 |
@@ -46,15 +46,33 @@ Durante la carga histórica se deshabilitan únicamente los triggers de usuario
 de las tablas de hechos. Las claves foráneas y restricciones `CHECK` siguen
 activas. Un bloque `finally` vuelve a habilitar los triggers incluso si ocurre
 un error. Luego se ejecuta `controles.sql`, que verifica huérfanos, stocks
-negativos, porcentajes de composición y totales de comprobantes.
+negativos, porcentajes de composición, totales de comprobantes, descuentos
+por tipo de cliente y subtotales de renglón.
 
 El riesgo es que los triggers de venta no recalculan datos históricos; por eso
-el generador calcula previamente subtotales, descuentos y stocks y los
-controles deben devolver cero inconsistencias.
+el generador hace el mismo cálculo que la base y los controles deben devolver
+cero inconsistencias:
+
+- el precio de cada renglón es el precio del vino;
+- el descuento de cada renglón es el del tipo de cliente (socio 10 %,
+  distribuidor 20 %, exportador 30 %, RN-06);
+- `subtotal_renglon = cantidad × precio × (1 − descuento / 100)`;
+- el total del comprobante es la suma de los renglones (`fn_total_comprobante`,
+  RN-08), el subtotal es la suma sin descuento y `descuento = subtotal − total`.
+
+Para que las consultas de la etapa 5 tengan resultados:
+
+- los comprobantes cubren los últimos 3 años hasta hoy;
+- los lotes cubren las últimas 5 campañas, con cosecha entre febrero y abril, y
+  cada parcela se cosecha una vez por campaña (RN-04);
+- cada exportador tiene de 1 a 5 permisos (U6) y la antigüedad de los
+  empleados varía entre 0 y 14 años (U2).
 
 ## Reproducibilidad y rendimiento
 
 Para repetir la misma carga se usa el mismo `--seed` sobre una base vacía.
+Las fechas recientes (comprobantes y campañas) se calculan desde el día de la
+carga, porque las consultas usan `CURRENT_DATE`.
 `medir_carga.py` compara `executemany` fila a fila con `COPY` y registra los
 tiempos en la salida estándar. Los resultados deben copiarse a esta sección
 después de ejecutar la medición en la base del equipo.
@@ -96,3 +114,18 @@ La comparación real con 10.000 filas fue:
 El dump generado fue validado con `gzip -t` y permanece ignorado por Git.
 La ejecución de escala completa debe realizarse sobre una base vacía, porque
 el cargador inserta los catálogos y no debe duplicarlos.
+
+## Pruebas de reglas de negocio
+
+Con la base inicializada, con o sin la carga masiva, se ejecuta con el rol
+propietario:
+
+```bash
+docker compose cp tests/db_tests.sql db:/tmp/db_tests.sql
+docker compose exec db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/db_tests.sql'
+```
+
+La suite crea sus propios datos de prueba dentro de una transacción, valida
+RN-01 a RN-15, informa `PASS` para cada regla y hace `ROLLBACK` al finalizar.
+La ejecución verificada produjo 15/15 reglas aprobadas, tanto en una base vacía
+como después de la carga completa.

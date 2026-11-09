@@ -24,6 +24,8 @@ from psycopg import sql
 
 ROOT = Path(__file__).parent
 SEED = 20261108
+# Las fechas recientes se calculan desde hoy: las consultas usan CURRENT_DATE.
+HOY = date.today()
 
 
 def read_csv(name: str) -> list[dict[str, str]]:
@@ -74,7 +76,7 @@ def load_catalogs(cur: psycopg.Cursor) -> tuple[list[int], list[int], list[int],
     localidades = read_csv("localidades.csv")
     cepas = read_csv("cepas.csv")
     maridajes = read_csv("maridajes.csv")
-    tipos_vino = [row["tipo"].capitalize() for row in read_csv("tipos_vino.csv")]
+    tipos_vino = [row["tipo"] for row in read_csv("tipos_vino.csv")]
     presentaciones = [int(row["volumen_ml"]) for row in read_csv("presentaciones.csv")]
     copy_rows(
         cur,
@@ -86,7 +88,7 @@ def load_catalogs(cur: psycopg.Cursor) -> tuple[list[int], list[int], list[int],
         cur,
         "Cepa",
         ["nombre", "tipo"],
-        [(row["nombre"], row["tipo"].capitalize()) for row in cepas],
+        [(row["nombre"], row["tipo"]) for row in cepas],
         "id_cepa",
     )
     maridaje_ids = insert_returning(
@@ -165,7 +167,7 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                     cur,
                     "Auditoria",
                     ["cod_vino", "usuario", "precio_anterior", "precio_nuevo", "fecha_hora"],
-                    [(vino_ids[0], "carga_masiva", vino_rows[0][4], vino_rows[0][4], datetime(2025, 1, 1, 0, 0))],
+                    [(vino_ids[0], "carga_masiva", (vino_rows[0][3] / Decimal("1.10")).quantize(Decimal("0.01")), vino_rows[0][3], datetime(2025, 1, 1, 0, 0))],
                 )
 
                 sala_rows = [(fake.street_name(), i + 1, random.choice(["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]), localidades[i % len(localidades)]) for i in range(args.salas)]
@@ -174,7 +176,7 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                     sala_ids.extend(insert_returning(cur, "Sala_Venta", ["calle", "numero", "dia_cierre", "cod_postal"], batch, "id_sala"))
                 empleado_rows = [
                     (cuit(20000000000 + i), fake.first_name(), fake.last_name(),
-                     Decimal("250000") + i, date(2020, 1, 1),
+                     Decimal("250000") + i, date(2012, 1, 1) + timedelta(days=(i * 97) % 5000),
                      sala_ids[i % len(sala_ids)])
                     for i in range(args.empleados)
                 ]
@@ -189,15 +191,18 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                 copy_rows(cur, "Transportista_Telefono", ["cod_transporte", "telefono"], [(i, f"2604{i:06d}") for i in transport_ids])
                 copy_rows(cur, "Transportista_Localidad", ["cod_transporte", "cod_postal"], [(i, localidades[n % len(localidades)]) for n, i in enumerate(transport_ids)])
 
+                # RN-04: una cosecha por parcela y campania; hay 5 campanias, asi que entran 5 lotes por parcela
+                if args.lotes > 5 * len(parcela_refs):
+                    raise SystemExit(f"--lotes no puede superar {5 * len(parcela_refs)} (5 campanias por parcela)")
                 lote_rows = []
                 for i in range(args.lotes):
                     finca_id, parcela = parcela_refs[i % len(parcela_refs)]
-                    fecha = date(2022 + i % 3, 3, 1 + i % 28)
+                    fecha = date(HOY.year - 4 + i // len(parcela_refs), 2 + i % 3, 1 + i % 28)
                     lote_rows.append((fecha.year, fecha, Decimal("1000") + i, bodega_ids[i % len(bodega_ids)], finca_id, parcela))
                 lote_ids = []
                 for batch in chunks(lote_rows, 1000):
                     lote_ids.extend(insert_returning(cur, "Lote", ["campania", "fecha_cosecha", "kilos", "cuit_bodega", "id_finca", "nro_parcela"], batch, "nro_lote"))
-                analisis = [(date(2022 + i % 3, 4, 1), Decimal("22.00"), Decimal("3.40"), Decimal("6.00"), lote_id) for i, lote_id in enumerate(lote_ids)]
+                analisis = [(lote_rows[i][1] + timedelta(days=10), Decimal("22.00"), Decimal("3.40"), Decimal("6.00"), lote_id) for i, lote_id in enumerate(lote_ids)]
                 copy_rows(cur, "Analisis_Calidad", ["fecha", "grado_brix", "ph", "acidez_total", "nro_lote"], analisis)
 
                 cliente_rows = []
@@ -211,13 +216,15 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                 copy_rows(cur, "Distribuidor", ["id_cliente", "zona_cobertura", "nro_habilitacion"], [(i, "Cuyo", f"HAB-{i}") for i in distribuidor_ids])
                 exportador_ids = cliente_ids[max(2, 2 * len(cliente_ids) // 3):]
                 copy_rows(cur, "Exportador", ["id_cliente", "pais_destino"], [(i, "Chile") for i in exportador_ids])
-                copy_rows(cur, "Permiso_exportacion", ["fecha_emision", "fecha_vencimiento", "id_cliente"], [(date(2025, 1, 1), date(2026, 12, 31), i) for i in exportador_ids])
-                cliente_descuento = {
-                    cliente_id: Decimal("10")
-                    for cliente_id in distribuidor_ids
-                }
-                cliente_descuento.update({cliente_id: Decimal("15") for cliente_id in exportador_ids})
-                cliente_descuento.update({cliente_id: Decimal("5") for cliente_id in cliente_ids[: max(1, len(cliente_ids) // 3)]})
+                permisos = [
+                    (date(2021, 1, 1) + timedelta(days=365 * n), date(2022, 1, 1) + timedelta(days=365 * n), i)
+                    for k, i in enumerate(exportador_ids) for n in range(1 + k % 5)
+                ]
+                copy_rows(cur, "Permiso_exportacion", ["fecha_emision", "fecha_vencimiento", "id_cliente"], permisos)
+                # RN-06: mismos porcentajes que los DEFAULT de Socio, Distribuidor y Exportador
+                cliente_descuento = {cliente_id: Decimal("20") for cliente_id in distribuidor_ids}
+                cliente_descuento.update({cliente_id: Decimal("30") for cliente_id in exportador_ids})
+                cliente_descuento.update({cliente_id: Decimal("10") for cliente_id in cliente_ids[: max(1, len(cliente_ids) // 3)]})
 
                 deposito_ids = insert_returning(cur, "Deposito_Central", ["nombre"], [("Depósito Central",)], "id_deposito")
                 deposito_id = deposito_ids[0]
@@ -238,7 +245,7 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                 copy_rows(cur, "Transferencia_Vino", ["nro_solicitud", "cod_vino", "cantidad"], transfer_lines)
 
                 sales_stock = defaultdict(int)
-                price_by_vino = {vino_id: row[4] for vino_id, row in zip(vino_ids, vino_rows)}
+                price_by_vino = {vino_id: row[3] for vino_id, row in zip(vino_ids, vino_rows)}
                 for start in range(0, args.comprobantes, 1000):
                     size = min(1000, args.comprobantes - start)
                     comp_rows = []
@@ -248,16 +255,21 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                         sala_id = sala_ids[(start + offset) % len(sala_ids)]
                         details = []
                         subtotal = Decimal("0")
+                        total = Decimal("0")
+                        pct = cliente_descuento[client_id]
                         for line in range(4):
                             vino_id = vino_ids[(start + offset + line) % len(vino_ids)]
                             quantity = 1 + (start + offset + line) % 3
                             price = price_by_vino[vino_id]
-                            line_total = (price * quantity).quantize(Decimal("0.01"))
-                            subtotal += line_total
-                            details.append((vino_id, quantity, price, Decimal("0"), line_total))
+                            # Mismo calculo que fn_total_comprobante y los triggers del 005
+                            subtotal += (price * quantity).quantize(Decimal("0.01"))
+                            line_total = (price * quantity * (1 - pct / 100)).quantize(Decimal("0.01"))
+                            total += line_total
+                            details.append((vino_id, quantity, price, pct, line_total))
                             sales_stock[(sala_id, vino_id)] += quantity
-                        discount = (subtotal * cliente_descuento[client_id] / 100).quantize(Decimal("0.01"))
-                        comp_rows.append((date(2025, 1, 1) + timedelta(days=(start + offset) % 300), subtotal, discount, subtotal - discount, sala_id, client_id))
+                        # Comprobantes de los ultimos 3 anios hasta hoy (consultas de ultima semana/trimestre)
+                        fecha = HOY - timedelta(days=(start + offset) % 1095)
+                        comp_rows.append((fecha, subtotal, subtotal - total, total, sala_id, client_id))
                         detail_sets.append(details)
                     comp_ids = insert_returning(cur, "Comprobante", ["fecha", "subtotal", "descuento", "total", "id_sala", "id_cliente"], comp_rows, "nro_comprobante")
                     detail_rows = [(comp_id, vino_id, quantity, price, discount, line_total) for comp_id, details in zip(comp_ids, detail_sets) for vino_id, quantity, price, discount, line_total in details]
@@ -287,7 +299,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--bodegas", type=int, default=20)
     parser.add_argument("--fincas", type=int, default=50)
-    parser.add_argument("--parcelas-por-finca", type=int, default=10)
+    parser.add_argument("--parcelas-por-finca", type=int, default=20)
     parser.add_argument("--vinos", type=int, default=500)
     parser.add_argument("--salas", type=int, default=30)
     parser.add_argument("--empleados", type=int, default=60)
