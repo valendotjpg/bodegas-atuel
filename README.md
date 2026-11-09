@@ -23,6 +23,9 @@ docker compose up -d
 docker compose logs -f db # ver que las migraciones corran sin errores
 ```
 
+Con `docker compose up -d` quedan la API en <http://localhost:8000/docs> y el
+front en <http://localhost:8080>.
+
 Para cargar los datos de prueba (etapa 3) sobre la base recien creada:
 
 ```bash
@@ -50,7 +53,7 @@ docker compose up -d
 | `tests/` | `db_tests.sql` (un caso por regla RN-01 a RN-15) y `db_tests_roles.sql` (privilegios de cada rol) |
 | `consultas/` | `insert.sql`, `update.sql`, `delete.sql`, `select.sql` |
 | `api/` | API REST FastAPI con psycopg |
-| `front/` | Front |
+| `front/` | Front en React + Vite (ver `front/README.md`) |
 | `docs/` | DER, diccionario de datos, informes por etapa |
 
 ## Hitos

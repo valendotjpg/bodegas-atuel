@@ -183,7 +183,7 @@ BEGIN
         INSERT INTO composicion (cod_vino, id_cepa, porcentaje)
         VALUES (v_vino_bad, v_cepa, 60);
         SET CONSTRAINTS ALL IMMEDIATE;
-    EXCEPTION WHEN check_violation THEN
+    EXCEPTION WHEN raise_exception THEN
         v_failed := true;
     END;
     SET CONSTRAINTS ALL DEFERRED;
@@ -281,7 +281,7 @@ BEGIN
             (nro_comprobante, cod_vino, cantidad, precio_unitario,
              descuento_aplicado, subtotal_renglon)
         VALUES (v_comprobante_bad, v_vino, 100, 0, 0, 0);
-    EXCEPTION WHEN check_violation THEN
+    EXCEPTION WHEN raise_exception THEN
         v_failed := true;
     END;
     IF NOT v_failed THEN
@@ -307,7 +307,7 @@ BEGIN
     v_failed := false;
     BEGIN
         UPDATE ingreso SET estado = 'en_confeccion' WHERE cod_ingreso = v_ingreso;
-    EXCEPTION WHEN object_not_in_prerequisite_state THEN
+    EXCEPTION WHEN raise_exception THEN
         v_failed := true;
     END;
     IF NOT v_failed THEN
@@ -329,7 +329,7 @@ BEGIN
     BEGIN
         INSERT INTO transferencia_vino (nro_solicitud, cod_vino, cantidad)
         VALUES (v_transferencia, v_vino_bad, 1);
-    EXCEPTION WHEN object_not_in_prerequisite_state THEN
+    EXCEPTION WHEN raise_exception THEN
         v_failed := true;
     END;
     IF NOT v_failed THEN
@@ -340,7 +340,7 @@ BEGIN
         UPDATE transferencia
            SET fecha = CURRENT_DATE - 1
          WHERE nro_solicitud = v_transferencia;
-    EXCEPTION WHEN object_not_in_prerequisite_state THEN
+    EXCEPTION WHEN raise_exception THEN
         v_failed := true;
     END;
     IF NOT v_failed THEN

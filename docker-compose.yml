@@ -1,4 +1,4 @@
-# Etapa 1: solo la base. API y front se agregan en las etapas 6 y 7.
+# Base, API y front: docker compose up -d levanta los tres.
 services:
   db:
     image: postgres:16.4
@@ -36,6 +36,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  # Front compilado servido por nginx; /api se redirige al servicio api (mismo origen, sin CORS).
+  front:
+    build: ./front
+    ports:
+      - "${FRONT_PORT:-8080}:80"
+    depends_on:
+      - api
 
   # Carga masiva (etapa 3). No arranca con "up": se corre a mano sobre una base vacia con
   #   docker compose run --rm seed

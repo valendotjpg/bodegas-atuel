@@ -24,9 +24,13 @@ def list_wines(
     id_cepa: int | None,
     cuit_bodega: str | None,
     anada: int | None,
+    q: str | None = None,
 ) -> list[dict[str, Any]]:
     filters = []
     params: list[Any] = []
+    if q is not None:
+        filters.append("v.nombre_comercial ILIKE %s")
+        params.append(f"%{q}%")
     if tipo is not None:
         filters.append("v.tipo = %s")
         params.append(tipo)
@@ -44,8 +48,9 @@ def list_wines(
     cursor = conn.execute(
         f"""
         SELECT v.cod_vino, v.anada, v.tipo, v.nombre_comercial, v.precio,
-               v.graduacion, v.volumen_ml, v.cuit_bodega
+               v.graduacion, v.volumen_ml, v.cuit_bodega, b.razon_social AS bodega
         FROM vino v
+        JOIN bodega b ON b.cuit_bodega = v.cuit_bodega
         {where}
         ORDER BY v.cod_vino
         LIMIT %s OFFSET %s
@@ -59,7 +64,7 @@ def get_wine(conn: Connection, cod_vino: int) -> dict[str, Any] | None:
     cursor = conn.execute(
         """
         SELECT v.cod_vino, v.anada, v.tipo, v.nombre_comercial, v.precio,
-               v.graduacion, v.volumen_ml, v.cuit_bodega,
+               v.graduacion, v.volumen_ml, v.cuit_bodega, b.razon_social AS bodega,
                COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
                    'id_cepa', c.id_cepa, 'nombre', c.nombre, 'porcentaje', cp.porcentaje
                )) FILTER (WHERE c.id_cepa IS NOT NULL), '[]') AS composicion,
@@ -67,12 +72,13 @@ def get_wine(conn: Connection, cod_vino: int) -> dict[str, Any] | None:
                    'id_maridaje', m.id_maridaje, 'nombre', m.nombre_maridaje
                )) FILTER (WHERE m.id_maridaje IS NOT NULL), '[]') AS maridajes
         FROM vino v
+        JOIN bodega b ON b.cuit_bodega = v.cuit_bodega
         LEFT JOIN composicion cp ON cp.cod_vino = v.cod_vino
         LEFT JOIN cepa c ON c.id_cepa = cp.id_cepa
         LEFT JOIN vino_maridaje vm ON vm.cod_vino = v.cod_vino
         LEFT JOIN maridaje m ON m.id_maridaje = vm.id_maridaje
         WHERE v.cod_vino = %s
-        GROUP BY v.cod_vino
+        GROUP BY v.cod_vino, b.razon_social
         """,
         (cod_vino,),
     )
@@ -129,7 +135,8 @@ def delete_wine(conn: Connection, cod_vino: int) -> bool:
     return cursor.rowcount == 1
 
 
-def list_clients(conn: Connection, limit: int, offset: int) -> list[dict[str, Any]]:
+def list_clients(conn: Connection, limit: int, offset: int, q: str | None = None) -> list[dict[str, Any]]:
+    pattern = f"%{q}%" if q else None
     cursor = conn.execute(
         """
         SELECT c.*, CASE
@@ -141,9 +148,12 @@ def list_clients(conn: Connection, limit: int, offset: int) -> list[dict[str, An
         LEFT JOIN socio s ON s.id_cliente = c.id_cliente
         LEFT JOIN distribuidor d ON d.id_cliente = c.id_cliente
         LEFT JOIN exportador e ON e.id_cliente = c.id_cliente
+        WHERE %s::text IS NULL
+           OR c.razon_social ILIKE %s OR c.apellido ILIKE %s OR c.nombre ILIKE %s
+           OR c.nro_documento ILIKE %s
         ORDER BY c.id_cliente LIMIT %s OFFSET %s
         """,
-        (limit, offset),
+        (pattern, pattern, pattern, pattern, pattern, limit, offset),
     )
     return _rows(cursor)
 
@@ -259,8 +269,55 @@ def add_transfer_line(conn: Connection, transfer_id: int, line: dict[str, Any]) 
     )
 
 
-def transition_transfer(conn: Connection, transfer_id: int, state: str) -> None:
-    conn.execute("UPDATE transferencia SET estado = %s WHERE nro_solicitud = %s", (state, transfer_id))
+def transition_transfer(conn: Connection, transfer_id: int, state: str) -> bool:
+    cursor = conn.execute("UPDATE transferencia SET estado = %s WHERE nro_solicitud = %s", (state, transfer_id))
+    return cursor.rowcount == 1
+
+
+def transition_income(conn: Connection, income_id: int, state: str) -> bool:
+    cursor = conn.execute("UPDATE ingreso SET estado = %s WHERE cod_ingreso = %s", (state, income_id))
+    return cursor.rowcount == 1
+
+
+def list_transfers(
+    conn: Connection, limit: int, offset: int, estado: str | None, id_sala: int | None
+) -> list[dict[str, Any]]:
+    cursor = conn.execute(
+        """
+        SELECT t.nro_solicitud, t.estado::text AS estado, t.fecha, t.id_sala,
+               count(tv.cod_vino) AS renglones, COALESCE(SUM(tv.cantidad), 0) AS botellas
+        FROM transferencia t
+        LEFT JOIN transferencia_vino tv ON tv.nro_solicitud = t.nro_solicitud
+        WHERE (%s::text IS NULL OR t.estado::text = %s)
+          AND (%s::int IS NULL OR t.id_sala = %s)
+        GROUP BY t.nro_solicitud
+        ORDER BY t.nro_solicitud DESC
+        LIMIT %s OFFSET %s
+        """,
+        (estado, estado, id_sala, id_sala, limit, offset),
+    )
+    return _rows(cursor)
+
+
+def get_transfer(conn: Connection, transfer_id: int) -> dict[str, Any] | None:
+    head = _rows(conn.execute(
+        """
+        SELECT t.nro_solicitud, t.estado::text AS estado, t.fecha, t.id_sala
+        FROM transferencia t WHERE t.nro_solicitud = %s
+        """,
+        (transfer_id,),
+    ))
+    if not head:
+        return None
+    lines = _rows(conn.execute(
+        """
+        SELECT tv.cod_vino, v.nombre_comercial, tv.cantidad
+        FROM transferencia_vino tv JOIN vino v ON v.cod_vino = tv.cod_vino
+        WHERE tv.nro_solicitud = %s ORDER BY tv.cod_vino
+        """,
+        (transfer_id,),
+    ))
+    return {**head[0], "renglones": lines}
 
 
 def process_transfer(conn: Connection, transfer_id: int, deposit_id: int) -> None:
@@ -293,7 +350,34 @@ def report_stock(conn: Connection) -> list[dict[str, Any]]:
 
 
 def report_sales_by_room(conn: Connection) -> list[dict[str, Any]]:
-    return _rows(conn.execute("SELECT * FROM v_ventas_mensuales ORDER BY mes DESC, id_sala"))
+    # S8: monto total de ventas por sala en el ultimo trimestre
+    return _rows(conn.execute(
+        """
+        SELECT s.id_sala, l.nombre AS localidad, COALESCE(SUM(c.total), 0) AS total_vendido
+        FROM sala_venta s
+        JOIN localidad l ON l.cod_postal = s.cod_postal
+        LEFT JOIN comprobante c ON c.id_sala = s.id_sala
+                               AND c.fecha >= CURRENT_DATE - INTERVAL '3 months'
+        GROUP BY s.id_sala, l.nombre
+        ORDER BY total_vendido DESC, s.id_sala
+        """
+    ))
+
+
+def report_wines_without_stock(conn: Connection, id_sala: int) -> list[dict[str, Any]]:
+    # S6: vinos sin stock en la sala pero con stock en el deposito central
+    return _rows(conn.execute(
+        """
+        SELECT v.cod_vino, v.nombre_comercial, SUM(sd.cantidad) AS stock_deposito
+        FROM vino v
+        JOIN stock_deposito sd ON sd.cod_vino = v.cod_vino AND sd.cantidad > 0
+        WHERE NOT EXISTS (SELECT 1 FROM sala_venta_vino svv
+                          WHERE svv.id_sala = %s AND svv.cod_vino = v.cod_vino AND svv.cantidad > 0)
+        GROUP BY v.cod_vino, v.nombre_comercial
+        ORDER BY v.cod_vino
+        """,
+        (id_sala,),
+    ))
 
 
 def report_pending(conn: Connection) -> list[dict[str, Any]]:
@@ -321,9 +405,11 @@ def report_transport_active(conn: Connection) -> list[dict[str, Any]]:
             """
             SELECT t.cod_transporte, t.razon_social, COUNT(i.cod_ingreso) AS ingresos
             FROM transportista t
-            LEFT JOIN ingreso i ON i.cod_transporte = t.cod_transporte
+            JOIN ingreso i ON i.cod_transporte = t.cod_transporte
+            WHERE i.fecha_ingreso >= CURRENT_DATE - INTERVAL '1 month'
             GROUP BY t.cod_transporte, t.razon_social
-            ORDER BY ingresos DESC, t.cod_transporte
+            ORDER BY ingresos DESC
+            FETCH FIRST 1 ROWS WITH TIES
             """
         )
     )
@@ -347,3 +433,29 @@ def report_traceability(conn: Connection, wine_id: int) -> list[dict[str, Any]]:
             (wine_id, wine_id),
         )
     )
+
+
+def list_cepas(conn: Connection) -> list[dict[str, Any]]:
+    return _rows(conn.execute("SELECT id_cepa, nombre, tipo FROM cepa ORDER BY nombre"))
+
+
+def list_bodegas(conn: Connection) -> list[dict[str, Any]]:
+    return _rows(conn.execute("SELECT cuit_bodega, razon_social FROM bodega ORDER BY razon_social"))
+
+
+def list_maridajes(conn: Connection) -> list[dict[str, Any]]:
+    return _rows(conn.execute("SELECT id_maridaje, nombre_maridaje FROM maridaje ORDER BY nombre_maridaje"))
+
+
+def list_salas(conn: Connection) -> list[dict[str, Any]]:
+    return _rows(conn.execute(
+        """
+        SELECT s.id_sala, s.calle, s.numero, l.nombre AS localidad
+        FROM sala_venta s JOIN localidad l ON l.cod_postal = s.cod_postal
+        ORDER BY s.id_sala
+        """
+    ))
+
+
+def list_depositos(conn: Connection) -> list[dict[str, Any]]:
+    return _rows(conn.execute("SELECT id_deposito, nombre FROM deposito_central ORDER BY id_deposito"))
