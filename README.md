@@ -23,6 +23,12 @@ docker compose up -d
 docker compose logs -f db # ver que las migraciones corran sin errores
 ```
 
+Para cargar los datos de prueba (etapa 3) sobre la base recien creada:
+
+```bash
+docker compose run --rm seed
+```
+
 Si ya tenes un PostgreSQL instalado en la PC usando el puerto 5432, cambia
 `POSTGRES_PORT` en el `.env` (ej. `5433`).
 
