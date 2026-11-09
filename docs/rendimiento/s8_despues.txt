@@ -1,0 +1,27 @@
+﻿      indexname       
+----------------------
+ comprobante_pkey
+ idx_ventas_trimestre
+(2 rows)
+
+ANALYZE
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=216.14..216.22 rows=30 width=36) (actual time=1.198..1.200 rows=30 loops=1)
+   Sort Key: (sum(total)) DESC
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=4 read=24
+   ->  HashAggregate  (cost=215.03..215.41 rows=30 width=36) (actual time=1.185..1.190 rows=30 loops=1)
+         Group Key: id_sala
+         Batches: 1  Memory Usage: 32kB
+         Buffers: shared hit=4 read=24
+         ->  Index Only Scan using idx_ventas_trimestre on comprobante  (cost=0.42..186.90 rows=5627 width=10) (actual time=0.084..0.601 rows=5487 loops=1)
+               Index Cond: (fecha >= (CURRENT_DATE - '3 mons'::interval))
+               Heap Fetches: 0
+               Buffers: shared hit=4 read=24
+ Planning:
+   Buffers: shared hit=58
+ Planning Time: 0.163 ms
+ Execution Time: 1.219 ms
+(16 rows)
+
