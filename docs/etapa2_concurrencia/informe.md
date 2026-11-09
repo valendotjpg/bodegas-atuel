@@ -17,8 +17,12 @@ dejar el stock en 1.
 
 ```bash
 docker compose up -d
-docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < docs/etapa2_concurrencia/preparar.sql
+docker compose cp docs/etapa2_concurrencia/preparar.sql db:/tmp/preparar.sql
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/preparar.sql'
 ```
+
+Funciona igual en PowerShell, CMD y Git Bash. Para repetirlo antes de cada
+escenario alcanza con el último comando.
 
 Tiene que mostrar `stock = 1`.
 

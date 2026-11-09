@@ -1,7 +1,8 @@
 -- Demo de concurrencia: deja un vino con una sola botella en una sala y un comprobante
 -- abierto para cada sesion (A y B). Se puede correr varias veces: vuelve a dejar el stock en 1.
 -- Se corre con el rol propietario:
---   docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < docs/etapa2_concurrencia/preparar.sql
+--   docker compose cp docs/etapa2_concurrencia/preparar.sql db:/tmp/preparar.sql
+--   docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/preparar.sql'
 
 \set ON_ERROR_STOP on
 
