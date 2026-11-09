@@ -43,7 +43,7 @@ docker compose up -d
 | `db/seed/` | CSV de catalogos y script de carga masiva |
 | `tests/` | `db_tests.sql` (un caso por regla RN-01 a RN-15) y `db_tests_roles.sql` (privilegios de cada rol) |
 | `consultas/` | `insert.sql`, `update.sql`, `delete.sql`, `select.sql` |
-| `api/` | API REST |
+| `api/` | API REST FastAPI con psycopg |
 | `front/` | Front |
 | `docs/` | DER, diccionario de datos, informes por etapa |
 
@@ -51,12 +51,12 @@ docker compose up -d
 
 | Hito | Etapa | Estado |
 |---|---|---|
-| H1 | Modelado | pendiente |
-| H2 | Integridad y logica en la base | pendiente |
-| H3 | Carga masiva | pendiente |
+| H1 | Modelado | completado |
+| H2 | Integridad y logica en la base | completado |
+| H3 | Carga masiva | completado |
 | H4 | Indices y rendimiento | pendiente |
 | H5 | Consultas SQL | pendiente |
-| H6 | API | pendiente |
+| H6 | API | en desarrollo |
 | H7 | Front | pendiente |
 | H8 | Nube | pendiente |
 | H9 | Documentacion y defensa | pendiente |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and bulk-load a coherent Bodegas del Atuel dataset.
+"""Generar y cargar masivamente los datos de prueba
 
 The default scale satisfies the stage-three volume requirements.  The loader
 uses COPY for large tables and temporarily disables only user triggers while

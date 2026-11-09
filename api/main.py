@@ -1,0 +1,289 @@
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException, Query
+from psycopg import Error as PsycopgError
+from psycopg_pool import ConnectionPool
+
+from db import connection, create_pool
+from errors import postgres_error_handler
+from repositories import (
+    add_income_line,
+    add_transfer_line,
+    create_client,
+    create_income,
+    create_receipt,
+    create_transfer,
+    create_wine,
+    delete_client,
+    delete_wine,
+    get_client,
+    get_receipt,
+    get_wine,
+    health,
+    list_clients,
+    list_wines,
+    process_income,
+    process_transfer,
+    report_pending,
+    report_sales_by_room,
+    report_stock,
+    report_top_wines,
+    report_traceability,
+    report_transport_active,
+    transition_transfer,
+    update_client,
+    update_wine,
+)
+from schemas import (
+    ClientCreate,
+    ClientUpdate,
+    DocumentCreate,
+    DocumentLine,
+    ReceiptCreate,
+    WineCreate,
+    WineUpdate,
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    pool = create_pool()
+    pool.open()
+    pool.wait()
+    app.state.pool = pool
+    yield
+    pool.close()
+
+
+app = FastAPI(
+    title="Bodegas del Atuel API",
+    version="1.0.0",
+    description="API REST con SQL parametrizado y reglas de negocio en PostgreSQL.",
+    lifespan=lifespan,
+)
+app.add_exception_handler(PsycopgError, postgres_error_handler)
+
+
+def get_pool() -> ConnectionPool:
+    return app.state.pool
+
+
+Pool = Annotated[ConnectionPool, Depends(get_pool)]
+
+
+@app.get("/salud")
+def health_check(pool: Pool):
+    with connection(pool) as conn:
+        return health(conn)
+
+
+@app.get("/vinos")
+def wines(
+    pool: Pool,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    tipo: str | None = None,
+    id_cepa: int | None = Query(default=None, gt=0),
+    cuit_bodega: str | None = None,
+    anada: int | None = Query(default=None, ge=1990, le=2100),
+):
+    with connection(pool) as conn:
+        return list_wines(conn, limit, offset, tipo, id_cepa, cuit_bodega, anada)
+
+
+@app.get("/vinos/{cod_vino}")
+def wine(cod_vino: int, pool: Pool):
+    with connection(pool) as conn:
+        result = get_wine(conn, cod_vino)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Vino no encontrado")
+    return result
+
+
+@app.post("/vinos", status_code=201)
+def create_wine_endpoint(payload: WineCreate, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            wine_id = create_wine(conn, payload.model_dump())
+        return get_wine(conn, wine_id)
+
+
+@app.put("/vinos/{cod_vino}")
+def update_wine_endpoint(cod_vino: int, payload: WineUpdate, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            updated = update_wine(conn, cod_vino, payload.model_dump(exclude_unset=True))
+        if not updated:
+            raise HTTPException(status_code=404, detail="Vino no encontrado")
+        return get_wine(conn, cod_vino)
+
+
+@app.delete("/vinos/{cod_vino}", status_code=204)
+def delete_wine_endpoint(cod_vino: int, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            deleted = delete_wine(conn, cod_vino)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Vino no encontrado")
+
+
+@app.get("/clientes")
+def clients(
+    pool: Pool,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    with connection(pool) as conn:
+        return list_clients(conn, limit, offset)
+
+
+@app.get("/clientes/{client_id}")
+def client(client_id: int, pool: Pool):
+    with connection(pool) as conn:
+        result = get_client(conn, client_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return result
+
+
+@app.post("/clientes", status_code=201)
+def create_client_endpoint(payload: ClientCreate, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            client_id = create_client(conn, payload.model_dump())
+        return get_client(conn, client_id)
+
+
+@app.put("/clientes/{client_id}")
+def update_client_endpoint(client_id: int, payload: ClientUpdate, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            updated = update_client(conn, client_id, payload.model_dump(exclude_unset=True))
+        if not updated:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        return get_client(conn, client_id)
+
+
+@app.delete("/clientes/{client_id}", status_code=204)
+def delete_client_endpoint(client_id: int, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            deleted = delete_client(conn, client_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
+
+@app.post("/comprobantes", status_code=201)
+def create_receipt_endpoint(payload: ReceiptCreate, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            receipt_id = create_receipt(conn, payload.model_dump())
+        return get_receipt(conn, receipt_id)
+
+
+@app.get("/comprobantes/{receipt_id}")
+def receipt(receipt_id: int, pool: Pool):
+    with connection(pool) as conn:
+        result = get_receipt(conn, receipt_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+    return result
+
+
+@app.post("/transferencias", status_code=201)
+def create_transfer_endpoint(payload: DocumentCreate, pool: Pool):
+    if payload.id_sala is None:
+        raise HTTPException(status_code=422, detail="id_sala es obligatorio")
+    with connection(pool) as conn:
+        with conn.transaction():
+            return {"nro_solicitud": create_transfer(conn, payload.id_sala)}
+
+
+@app.post("/transferencias/{transfer_id}/renglones", status_code=201)
+def transfer_line(transfer_id: int, payload: DocumentLine, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            add_transfer_line(conn, transfer_id, payload.model_dump())
+    return {"status": "ok"}
+
+
+@app.post("/transferencias/{transfer_id}/terminar")
+def finish_transfer(transfer_id: int, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            transition_transfer(conn, transfer_id, "terminado")
+    return {"status": "terminado", "nro_solicitud": transfer_id}
+
+
+@app.post("/transferencias/{transfer_id}/procesar")
+def process_transfer_endpoint(transfer_id: int, deposit_id: int, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            process_transfer(conn, transfer_id, deposit_id)
+    return {"status": "procesado", "nro_solicitud": transfer_id}
+
+
+@app.post("/ingresos", status_code=201)
+def create_income_endpoint(payload: DocumentCreate, pool: Pool):
+    if payload.cuit_bodega is None or payload.cod_transporte is None:
+        raise HTTPException(status_code=422, detail="cuit_bodega y cod_transporte son obligatorios")
+    with connection(pool) as conn:
+        with conn.transaction():
+            return {"cod_ingreso": create_income(conn, payload.model_dump())}
+
+
+@app.post("/ingresos/{income_id}/renglones", status_code=201)
+def income_line(income_id: int, payload: DocumentLine, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            add_income_line(conn, income_id, payload.model_dump())
+    return {"status": "ok"}
+
+
+@app.post("/ingresos/{income_id}/terminar")
+def finish_income(income_id: int, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            conn.execute("UPDATE ingreso SET estado = %s WHERE cod_ingreso = %s", ("terminado", income_id))
+    return {"status": "terminado", "cod_ingreso": income_id}
+
+
+@app.post("/ingresos/{income_id}/procesar")
+def process_income_endpoint(income_id: int, deposit_id: int, pool: Pool):
+    with connection(pool) as conn:
+        with conn.transaction():
+            process_income(conn, income_id, deposit_id)
+    return {"status": "procesado", "cod_ingreso": income_id}
+
+
+@app.get("/reportes/top-vinos")
+def top_wines(pool: Pool):
+    with connection(pool) as conn:
+        return report_top_wines(conn)
+
+
+@app.get("/reportes/ventas-por-sala")
+def sales_by_room(pool: Pool):
+    with connection(pool) as conn:
+        return report_sales_by_room(conn)
+
+
+@app.get("/reportes/vinos-sin-stock")
+def wines_without_stock(pool: Pool):
+    with connection(pool) as conn:
+        return [row for row in report_stock(conn) if row["stock_total"] == 0]
+
+
+@app.get("/reportes/transportista-activo")
+def active_carriers(pool: Pool):
+    with connection(pool) as conn:
+        return report_transport_active(conn)
+
+
+@app.get("/reportes/trazabilidad/{cod_vino}")
+def traceability(cod_vino: int, pool: Pool):
+    with connection(pool) as conn:
+        return report_traceability(conn, cod_vino)

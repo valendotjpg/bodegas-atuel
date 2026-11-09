@@ -91,6 +91,10 @@ después de ejecutar la medición en la base del equipo.
 
 Después de cargar y validar, con el usuario dueño (el rol de la API no puede
 leer `Auditoria` ni crear tablas, así que no sirve para el volcado):
+Para cargar los datos usamos:
+python db/seed/generar.py --dsn "postgresql://bodegas_owner:TU_CLAVE@localhost:5432/bodegas"
+
+Después de cargar y validar:
 
 ```bash
 docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=plain --no-owner | gzip > /tmp/dump_completo.sql.gz'
