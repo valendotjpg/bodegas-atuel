@@ -1,4 +1,5 @@
--- fn_descuento_cliente (RN-06): porcentaje de descuento según el tipo de cliente (10, 20 o 30).
+-- fn_descuento_cliente (RN-06): porcentaje de descuento del cliente, guardado en su subtipo
+-- (por defecto socio 10, distribuidor 20, exportador 30; U6 puede subirlo).
 -- Parámetros: p_id_cliente. STABLE: lee Cliente y sus subtipos.
 CREATE FUNCTION fn_descuento_cliente(p_id_cliente INT)
 RETURNS NUMERIC(5,2)
@@ -9,6 +10,7 @@ DECLARE
     v_es_socio        BOOLEAN;
     v_es_distribuidor BOOLEAN;
     v_es_exportador   BOOLEAN;
+    v_porcentaje      NUMERIC(5,2);
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM Cliente WHERE id_cliente = p_id_cliente) THEN
         RAISE EXCEPTION 'El cliente % no existe', p_id_cliente
@@ -25,11 +27,14 @@ BEGIN
     END IF;
 
     IF v_es_socio THEN
-        RETURN 10.00;
+        SELECT porcentaje_descuento INTO v_porcentaje FROM Socio WHERE id_cliente = p_id_cliente;
+        RETURN v_porcentaje;
     ELSIF v_es_distribuidor THEN
-        RETURN 20.00;
+        SELECT porcentaje_descuento INTO v_porcentaje FROM Distribuidor WHERE id_cliente = p_id_cliente;
+        RETURN v_porcentaje;
     ELSIF v_es_exportador THEN
-        RETURN 30.00;
+        SELECT porcentaje_descuento INTO v_porcentaje FROM Exportador WHERE id_cliente = p_id_cliente;
+        RETURN v_porcentaje;
     END IF;
 
     RAISE EXCEPTION 'El cliente % no es socio, distribuidor ni exportador', p_id_cliente

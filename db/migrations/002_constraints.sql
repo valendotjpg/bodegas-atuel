@@ -18,7 +18,7 @@ ALTER TABLE Vino
 ADD CONSTRAINT unique_nombre UNIQUE (nombre_comercial, anada, volumen_ml);
 
 ALTER TABLE Vino
-ADD CONSTRAINT check_tipo CHECK (tipo IN ('Tinto', 'Blanco', 'Rosado', 'Espumante'));
+ADD CONSTRAINT check_tipo CHECK (tipo IN ('tinto', 'blanco', 'rosado', 'espumante'));
 
 ALTER TABLE Encargado
 ADD CONSTRAINT unique_localidad UNIQUE (cod_postal);
@@ -39,7 +39,7 @@ ALTER TABLE Cepa
 ADD CONSTRAINT unique_nombre_cepa UNIQUE (nombre);
 
 ALTER TABLE Cepa
-ADD CONSTRAINT check_tipo_cepa CHECK (tipo IN ('Blanca', 'Tinta'));
+ADD CONSTRAINT check_tipo_cepa CHECK (tipo IN ('blanca', 'tinta'));
 
 ALTER TABLE Parcela
 ADD CONSTRAINT check_superficie_parcela CHECK (superficie > 0);
@@ -52,6 +52,9 @@ ADD CONSTRAINT check_numero_bodega CHECK (numero > 0);
 
 ALTER TABLE Lote
 ADD CONSTRAINT check_campania CHECK (campania = EXTRACT(YEAR FROM fecha_cosecha));
+
+ALTER TABLE Lote
+ADD CONSTRAINT check_kilos CHECK (kilos > 0);
 
 ALTER TABLE Lote
 ADD CONSTRAINT unique_lote UNIQUE (id_finca, nro_parcela, campania);
@@ -78,6 +81,9 @@ ALTER TABLE Cliente
 ADD CONSTRAINT check_tipo_documento CHECK (tipo_documento IN ('DNI', 'Pasaporte', 'CUIT', 'CUIL'));
 
 ALTER TABLE Cliente
+ADD CONSTRAINT check_nombre_o_razon_social CHECK (razon_social IS NOT NULL OR (apellido IS NOT NULL AND nombre IS NOT NULL));
+
+ALTER TABLE Cliente
 ADD CONSTRAINT unique_documento UNIQUE (tipo_documento, nro_documento);
 
 ALTER TABLE Cliente
@@ -85,6 +91,15 @@ ADD CONSTRAINT check_numeracion CHECK (numero > 0);
 
 ALTER TABLE Distribuidor
 ADD CONSTRAINT unique_nro_habilitacion UNIQUE (nro_habilitacion);
+
+ALTER TABLE Socio
+ADD CONSTRAINT check_descuento_socio CHECK (porcentaje_descuento BETWEEN 0 AND 100);
+
+ALTER TABLE Distribuidor
+ADD CONSTRAINT check_descuento_distribuidor CHECK (porcentaje_descuento BETWEEN 0 AND 100);
+
+ALTER TABLE Exportador
+ADD CONSTRAINT check_descuento_exportador CHECK (porcentaje_descuento BETWEEN 0 AND 100);
 
 ALTER TABLE Permiso_Exportacion
 ADD CONSTRAINT check_fecha_emision CHECK (fecha_emision < fecha_vencimiento);
@@ -102,7 +117,7 @@ ALTER TABLE Detalle_Comprobante
 ADD CONSTRAINT check_cantidad CHECK (cantidad > 0);
 
 ALTER TABLE Detalle_Comprobante
-ADD CONSTRAINT check_precio_unitario CHECK (precio_unitario >= 0);
+ADD CONSTRAINT check_precio_unitario CHECK (precio_unitario > 0);
 
 ALTER TABLE Detalle_Comprobante
 ADD CONSTRAINT descuento_aplicado CHECK (descuento_aplicado BETWEEN 0 AND 100);

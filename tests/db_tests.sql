@@ -35,14 +35,18 @@ DECLARE
     v_fecha date;
     v_failed boolean;
 BEGIN
-    SELECT cod_postal, id_cepa, id_maridaje
-      INTO v_localidad, v_cepa, v_maridaje
-      FROM (
-          SELECT
-              (SELECT cod_postal FROM localidad ORDER BY cod_postal LIMIT 1) AS cod_postal,
-              (SELECT id_cepa FROM cepa ORDER BY id_cepa LIMIT 1) AS id_cepa,
-              (SELECT id_maridaje FROM maridaje ORDER BY id_maridaje LIMIT 1) AS id_maridaje
-      ) fixture;
+    -- Datos propios de la prueba: no depende de la carga masiva.
+    INSERT INTO localidad (cod_postal, nombre, provincia)
+    VALUES (9999, 'Localidad Test', 'Mendoza')
+    RETURNING cod_postal INTO v_localidad;
+    INSERT INTO encargado (nombre, apellido, cod_postal)
+    VALUES ('Encargado', 'Test', v_localidad);
+    INSERT INTO cepa (nombre, tipo)
+    VALUES ('Cepa Test', 'tinta')
+    RETURNING id_cepa INTO v_cepa;
+    INSERT INTO maridaje (nombre_maridaje, temperatura_servicio)
+    VALUES ('Maridaje Test', 16)
+    RETURNING id_maridaje INTO v_maridaje;
 
     INSERT INTO bodega (cuit_bodega, razon_social, calle, numero)
     VALUES (v_bodega, 'Bodega de pruebas', 'Calle Test', 1),
@@ -85,7 +89,7 @@ BEGIN
     BEGIN
         INSERT INTO vino
             (anada, tipo, nombre_comercial, precio, graduacion, volumen_ml, cuit_bodega)
-        VALUES (2025, 'Tinto', 'Vino RN01 inválido', 0, 12, 750, v_bodega);
+        VALUES (2025, 'tinto', 'Vino RN01 inválido', 0, 12, 750, v_bodega);
     EXCEPTION WHEN check_violation THEN
         v_failed := true;
     END;
@@ -96,7 +100,7 @@ BEGIN
     BEGIN
         INSERT INTO vino
             (anada, tipo, nombre_comercial, precio, graduacion, volumen_ml, cuit_bodega)
-        VALUES (2025, 'Tinto', 'Vino RN15 inválido', 100, 21, 750, v_bodega);
+        VALUES (2025, 'tinto', 'Vino RN15 inválido', 100, 21, 750, v_bodega);
     EXCEPTION WHEN check_violation THEN
         v_failed := true;
     END;
@@ -105,7 +109,7 @@ BEGIN
     END IF;
     INSERT INTO vino
         (anada, tipo, nombre_comercial, precio, graduacion, volumen_ml, cuit_bodega)
-    VALUES (2025, 'Tinto', 'Vino RN test', 100, 12, 750, v_bodega)
+    VALUES (2025, 'tinto', 'Vino RN test', 100, 12, 750, v_bodega)
     RETURNING cod_vino INTO v_vino;
     INSERT INTO composicion (cod_vino, id_cepa, porcentaje)
     VALUES (v_vino, v_cepa, 100);
@@ -156,10 +160,23 @@ BEGIN
         RAISE EXCEPTION 'RN-04 no rechazó dos cosechas en la misma campaña';
     END IF;
 
+    -- RN-15: los kilos de un lote son positivos.
+    v_failed := false;
+    BEGIN
+        INSERT INTO lote
+            (campania, fecha_cosecha, kilos, cuit_bodega, id_finca, nro_parcela)
+        VALUES (2024, '2024-03-01', -5, v_bodega, v_deposito, 1);
+    EXCEPTION WHEN check_violation THEN
+        v_failed := true;
+    END;
+    IF NOT v_failed THEN
+        RAISE EXCEPTION 'RN-15 aceptó kilos negativos';
+    END IF;
+
     -- RN-05: el trigger diferido exige que la composición sume 100.
     INSERT INTO vino
         (anada, tipo, nombre_comercial, precio, graduacion, volumen_ml, cuit_bodega)
-    VALUES (2025, 'Blanco', 'Vino composición inválida', 120, 12, 750, v_bodega)
+    VALUES (2025, 'blanco', 'Vino composición inválida', 120, 12, 750, v_bodega)
     RETURNING cod_vino INTO v_vino_bad;
     v_failed := false;
     BEGIN
@@ -191,6 +208,34 @@ BEGIN
     END;
     IF v_failed THEN
         RAISE EXCEPTION 'RN-06 falló para un socio válido';
+    END IF;
+
+    -- RN-06: el descuento se guarda en el subtipo y se puede cambiar (U6), siempre entre 0 y 100.
+    UPDATE exportador SET porcentaje_descuento = 35 WHERE id_cliente = v_exportador;
+    IF fn_descuento_cliente(v_exportador) <> 35 THEN
+        RAISE EXCEPTION 'RN-06 no usó el descuento guardado del exportador';
+    END IF;
+    UPDATE exportador SET porcentaje_descuento = 30 WHERE id_cliente = v_exportador;
+    v_failed := false;
+    BEGIN
+        UPDATE socio SET porcentaje_descuento = 120 WHERE id_cliente = v_socio;
+    EXCEPTION WHEN check_violation THEN
+        v_failed := true;
+    END;
+    IF NOT v_failed THEN
+        RAISE EXCEPTION 'RN-06 aceptó un descuento fuera de rango';
+    END IF;
+
+    -- Cliente: apellido y nombre o razón social.
+    v_failed := false;
+    BEGIN
+        INSERT INTO cliente (tipo_documento, nro_documento, calle, numero, cod_postal)
+        VALUES ('DNI', '99000009', 'Calle Test', 9, v_localidad);
+    EXCEPTION WHEN check_violation THEN
+        v_failed := true;
+    END;
+    IF NOT v_failed THEN
+        RAISE EXCEPTION 'Cliente sin nombre ni razón social fue aceptado';
     END IF;
 
     -- RN-07: permiso con vencimiento posterior a emisión.

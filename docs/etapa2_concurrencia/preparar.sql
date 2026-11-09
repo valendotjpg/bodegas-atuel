@@ -17,7 +17,7 @@ VALUES ('30777777777', 'Bodega Demo', 'Calle Demo', 1)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO Vino (anada, tipo, nombre_comercial, precio, graduacion, volumen_ml, cuit_bodega)
-VALUES (2020, 'Tinto', 'Demo Ultima Botella', 50000, 14, 750, '30777777777')
+VALUES (2020, 'tinto', 'Demo Ultima Botella', 50000, 14, 750, '30777777777')
 ON CONFLICT ON CONSTRAINT unique_nombre DO NOTHING;
 
 INSERT INTO Sala_Venta (calle, numero, dia_cierre, cod_postal)
