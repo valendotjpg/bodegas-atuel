@@ -97,12 +97,13 @@ docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --fo
 docker compose cp db:/tmp/dump_completo.sql.gz dump_completo.sql.gz
 ```
 
-El archivo resultante `dump_completo.sql.gz` se restaura sobre una base nueva
-(vacía, sin las migraciones) con el dueño:
+El archivo resultante `dump_completo.sql.gz` trae el esquema y los datos, así
+que se restaura en una base nueva y vacía (no sobre `bodegas`, que ya tiene las
+migraciones):
 
 ```bash
 docker compose cp dump_completo.sql.gz db:/tmp/dump_completo.sql.gz
-docker compose exec db sh -c 'gunzip -c /tmp/dump_completo.sql.gz | psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose exec db sh -c 'createdb -U "$POSTGRES_USER" bodegas_restaurada && gunzip -c /tmp/dump_completo.sql.gz | psql -U "$POSTGRES_USER" -d bodegas_restaurada'
 ```
 
 ## Verificación ejecutada
