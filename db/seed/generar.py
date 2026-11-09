@@ -153,11 +153,20 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                         parcela_refs.append((finca_id, nro))
                 copy_rows(cur, "Parcela", ["id_finca", "nro_parcela", "superficie", "anio_plantacion", "id_cepa"], parcela_rows)
 
+                # S12: la ultima bodega es boutique y elabora solo los ultimos 3 vinos
+                boutique = bodega_ids[-1]
                 vino_rows = []
                 for i in range(args.vinos):
-                    vino_rows.append((2015 + i % 11, random.choice(tipos_vino),
-                                      f"Reserva Atuel {i:05d}", Decimal(400 + i % 1000), Decimal("12.50") + Decimal(i % 40) / 10,
-                                      random.choice(presentaciones), random.choice(bodega_ids)))
+                    tipo, presentacion, bodega = random.choice(tipos_vino), None, None
+                    fila = (2015 + i % 11, tipo,
+                            f"Reserva Atuel {i:05d}", Decimal(400 + i % 1000), Decimal("12.50") + Decimal(i % 40) / 10)
+                    presentacion = random.choice(presentaciones)
+                    bodega = random.choice(bodega_ids)
+                    if i >= args.vinos - 3:
+                        bodega = boutique
+                    elif bodega == boutique:
+                        bodega = bodega_ids[0]
+                    vino_rows.append(fila + (presentacion, bodega))
                 vino_ids = []
                 for batch in chunks(vino_rows, 1000):
                     vino_ids.extend(insert_returning(cur, "Vino", ["anada", "tipo", "nombre_comercial", "precio", "graduacion", "volumen_ml", "cuit_bodega"], batch, "cod_vino"))
