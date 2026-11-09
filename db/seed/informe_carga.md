@@ -89,20 +89,25 @@ después de ejecutar la medición en la base del equipo.
 
 ## Volcado
 
+Después de cargar y validar, con el usuario dueño (el rol de la API no puede
+leer `Auditoria` ni crear tablas, así que no sirve para el volcado):
 Para cargar los datos usamos:
 python db/seed/generar.py --dsn "postgresql://bodegas_owner:TU_CLAVE@localhost:5432/bodegas"
 
 Después de cargar y validar:
 
 ```bash
-pg_dump "$DATABASE_URL" --format=plain --no-owner --file=dump_completo.sql
-gzip -f dump_completo.sql
+docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=plain --no-owner | gzip > /tmp/dump_completo.sql.gz'
+docker compose cp db:/tmp/dump_completo.sql.gz dump_completo.sql.gz
 ```
 
-El archivo resultante `dump_completo.sql.gz` puede restaurarse con:
+El archivo resultante `dump_completo.sql.gz` trae el esquema y los datos, así
+que se restaura en una base nueva y vacía (no sobre `bodegas`, que ya tiene las
+migraciones):
 
 ```bash
-gunzip -c dump_completo.sql.gz | psql "$DATABASE_URL"
+docker compose cp dump_completo.sql.gz db:/tmp/dump_completo.sql.gz
+docker compose exec db sh -c 'createdb -U "$POSTGRES_USER" bodegas_restaurada && gunzip -c /tmp/dump_completo.sql.gz | psql -U "$POSTGRES_USER" -d bodegas_restaurada'
 ```
 
 ## Verificación ejecutada

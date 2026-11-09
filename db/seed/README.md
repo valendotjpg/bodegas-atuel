@@ -45,12 +45,29 @@ están documentados en [`informe_carga.md`](informe_carga.md).
 
 ### Ejecución
 
-Instalar las dependencias fuera del repositorio y ejecutar contra una base ya
-inicializada:
+La carga parte de una **base vacía** y se corre con el **usuario dueño**
+(`POSTGRES_USER`), no con `DATABASE_URL`: el generador desactiva los triggers
+durante la carga y eso solo lo puede hacer el dueño. Con el rol de la API
+falla con `must be owner of table`.
+
+La forma más simple es con Docker, sin instalar Python. El comando anda igual
+en PowerShell, CMD y Git Bash, desde la raíz del repo:
+
+```bash
+docker compose down -v
+docker compose up -d db
+docker run --rm --network bodegas-atuel_default -v "${PWD}/db/seed:/seed:ro" --env-file .env python:3.12-slim sh -c 'pip install -q "psycopg[binary]" Faker && python /seed/generar.py --dsn "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB"'
+```
+
+`bodegas-atuel_default` es la red que crea `docker compose` (nombre de la
+carpeta del repo + `_default`); si la carpeta se llama distinto, cambia.
+
+Con Python instalado en la PC (3.10 a 3.13), reemplazando las claves por las
+del `.env`:
 
 ```bash
 python -m pip install "psycopg[binary]" Faker
-python db/seed/generar.py --dsn "$DATABASE_URL"
+python db/seed/generar.py --dsn "postgresql://bodegas_owner:CLAVE@localhost:5432/bodegas"
 ```
 
 `--seed` conserva la reproducibilidad. Para una prueba rápida se pueden
@@ -64,8 +81,11 @@ Para registrar la comparación pedida entre inserción fila a fila y carga por
 lotes:
 
 ```bash
-python db/seed/medir_carga.py --dsn "$DATABASE_URL" --filas 10000
+python db/seed/medir_carga.py --dsn "postgresql://bodegas_owner:CLAVE@localhost:5432/bodegas" --filas 10000
 ```
+
+También con el dueño: crea una tabla temporal y el rol de la API no tiene
+permiso para eso (007 se lo quita a PUBLIC).
 
 El script informa ambos tiempos y la mejora de `COPY` sobre
 `executemany`.
@@ -82,5 +102,5 @@ Los catálogos se cargan desde los CSV y no se generan al azar. Para cargar
 solamente esos archivos:
 
 ```bash
-python db/seed/cargar_catalogos.py --dsn "$DATABASE_URL"
+python db/seed/cargar_catalogos.py --dsn "postgresql://bodegas_owner:CLAVE@localhost:5432/bodegas"
 ```
