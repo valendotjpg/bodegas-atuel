@@ -67,6 +67,8 @@ Para que las consultas de la etapa 5 tengan resultados:
 - unos vinos se venden mucho más que otros (U5, S1, S11) y el 40 % de los vinos
   solo se vende en una de cada tres salas (S2);
 - 1 de cada 20 clientes nunca compró (D4, D6);
+- la última bodega es boutique y elabora solo 3 vinos, que algunos clientes
+  compraron todos (S12);
 - la última cepa del catálogo no se planta ni compone vinos (D2);
 - los ingresos cubren los últimos 2 años, con los tres estados y transportistas
   con actividad desigual (I1, S7, D5); las transferencias cubren el último año
