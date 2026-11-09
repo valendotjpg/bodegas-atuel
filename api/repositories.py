@@ -24,9 +24,13 @@ def list_wines(
     id_cepa: int | None,
     cuit_bodega: str | None,
     anada: int | None,
+    q: str | None = None,
 ) -> list[dict[str, Any]]:
     filters = []
     params: list[Any] = []
+    if q is not None:
+        filters.append("v.nombre_comercial ILIKE %s")
+        params.append(f"%{q}%")
     if tipo is not None:
         filters.append("v.tipo = %s")
         params.append(tipo)

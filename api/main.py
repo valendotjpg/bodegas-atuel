@@ -97,9 +97,10 @@ def wines(
     id_cepa: int | None = Query(default=None, gt=0),
     cuit_bodega: str | None = None,
     anada: int | None = Query(default=None, ge=1990, le=2100),
+    q: str | None = Query(default=None, min_length=1, max_length=80),
 ):
     with connection(pool) as conn:
-        return list_wines(conn, limit, offset, tipo, id_cepa, cuit_bodega, anada)
+        return list_wines(conn, limit, offset, tipo, id_cepa, cuit_bodega, anada, q)
 
 
 @app.get("/vinos/{cod_vino}")
