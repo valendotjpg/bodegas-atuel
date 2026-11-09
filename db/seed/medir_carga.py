@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare row-by-row and COPY insertion on the same PostgreSQL session."""
+"""Comparar fila por fila vs COPY para insertar muchas filas en una tabla temporal."""
 
 import argparse
 import os

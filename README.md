@@ -51,9 +51,9 @@ docker compose up -d
 
 | Hito | Etapa | Estado |
 |---|---|---|
-| H1 | Modelado | pendiente |
-| H2 | Integridad y logica en la base | pendiente |
-| H3 | Carga masiva | pendiente |
+| H1 | Modelado | completado |
+| H2 | Integridad y logica en la base | completado |
+| H3 | Carga masiva | completado |
 | H4 | Indices y rendimiento | pendiente |
 | H5 | Consultas SQL | pendiente |
 | H6 | API | en desarrollo |
