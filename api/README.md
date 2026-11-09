@@ -5,6 +5,9 @@ La API usa FastAPI, `psycopg` y `psycopg_pool`. No usa ORM: el SQL está en
 sentencias. La base sigue siendo responsable de stock, descuentos, totales,
 auditoría y transiciones de estado.
 
+Para estudiar la arquitectura, las carpetas y el funcionamiento de cada
+componente, consultar el [informe de implementación](informe_api.md).
+
 ## Ejecución local
 
 ```bash
