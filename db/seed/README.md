@@ -50,17 +50,19 @@ La carga parte de una **base vacía** y se corre con el **usuario dueño**
 durante la carga y eso solo lo puede hacer el dueño. Con el rol de la API
 falla con `must be owner of table`.
 
-La forma más simple es con Docker, sin instalar Python. El comando anda igual
-en PowerShell, CMD y Git Bash, desde la raíz del repo:
+La forma más simple es con el servicio `seed` del `docker-compose.yml`, que no
+necesita Python instalado y se escribe igual en CMD, PowerShell y Git Bash,
+desde la raíz del repo:
 
 ```bash
 docker compose down -v
 docker compose up -d db
-docker run --rm --network bodegas-atuel_default -v "${PWD}/db/seed:/seed:ro" --env-file .env python:3.12-slim sh -c 'pip install -q "psycopg[binary]" Faker && python /seed/generar.py --dsn "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB"'
+docker compose run --rm seed
 ```
 
-`bodegas-atuel_default` es la red que crea `docker compose` (nombre de la
-carpeta del repo + `_default`); si la carpeta se llama distinto, cambia.
+`seed` no arranca con `docker compose up`: solo con `run`. Tarda alrededor de un
+minuto y al final muestra los conteos (20.000 clientes, 150.000 comprobantes y
+600.000 renglones).
 
 Con Python instalado en la PC (3.10 a 3.13), reemplazando las claves por las
 del `.env`:

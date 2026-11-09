@@ -37,5 +37,23 @@ services:
       db:
         condition: service_healthy
 
+  # Carga masiva (etapa 3). No arranca con "up": se corre a mano sobre una base vacia con
+  #   docker compose run --rm seed
+  # Usa el usuario duenio porque desactiva los triggers durante la carga.
+  seed:
+    image: python:3.12-slim
+    profiles: ["seed"]
+    working_dir: /seed
+    volumes:
+      - ./db/seed:/seed:ro
+    environment:
+      DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PIP_ROOT_USER_ACTION: ignore
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    command: sh -c 'pip install -q "psycopg[binary]" Faker && python generar.py --dsn "$$DSN"'
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:
