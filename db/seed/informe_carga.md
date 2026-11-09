@@ -61,6 +61,9 @@ después de ejecutar la medición en la base del equipo.
 
 ## Volcado
 
+Para cargar los datos usamos:
+python db/seed/generar.py --dsn "postgresql://bodegas_owner:TU_CLAVE@localhost:5432/bodegas"
+
 Después de cargar y validar:
 
 ```bash
