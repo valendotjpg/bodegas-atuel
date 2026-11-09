@@ -12,7 +12,7 @@
 
 -- Parametros (se cambian aca)
 \set localidad_d3 '\'San Rafael\''
-\set localidad_d6 '\'General Alvear\''
+\set localidad_d6 '\'Tunuyán\''
 
 
 /* ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@
    antiguedad se calcula con CURRENT_DATE.
    Constraints: los renglones se borran solos por ON DELETE CASCADE de
    fk_detalle_comprobante_comprobante. El stock no se devuelve: es historial.
-   Filas afectadas: 0 (la carga tiene comprobantes de los ultimos 3 anios).
+   Filas afectadas: 14046 comprobantes y 56184 renglones (en cascada).
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -53,7 +53,7 @@ ROLLBACK;
    Estrategia: doble NOT EXISTS (anti-join) contra Composicion y Parcela.
    Constraints: si se intentara borrar una cepa en uso, las FK con ON DELETE
    RESTRICT lo impedirian; el NOT EXISTS evita llegar a ese error.
-   Filas afectadas: 0 (las 12 cepas del catalogo estan en uso).
+   Filas afectadas: 1 (la carga deja una cepa del catalogo sin usar).
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -114,7 +114,7 @@ ROLLBACK;
    borra de Cliente: la fila de Socio se va por ON DELETE CASCADE.
    Constraints: un socio con compras no se podria borrar (fk_comprobante_cliente
    es RESTRICT); el NOT EXISTS lo excluye.
-   Filas afectadas: 0 (en la carga todos los clientes tienen compras).
+   Filas afectadas: 170 clientes (y sus 170 filas de Socio en cascada).
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -141,7 +141,7 @@ ROLLBACK;
    Constraints y triggers: los renglones se borran por ON DELETE CASCADE. El
    trigger de bloqueo de renglones (RN-12) no lo impide, porque cuando corre
    la cascada el ingreso ya no existe. El stock del deposito no cambia.
-   Filas afectadas: 0 (la carga no tiene ingresos procesados).
+   Filas afectadas: 858 ingresos y 858 renglones (en cascada).
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -167,7 +167,7 @@ ROLLBACK;
        especifica.
    Estrategia: igual que D4, filtrando por la localidad del cliente (por
    nombre) en lugar de la fecha de alta.
-   Filas afectadas: 0 (en la carga todos los clientes tienen compras).
+   Filas afectadas: 56 clientes (y sus filas de Socio en cascada).
 --------------------------------------------------------------------------- */
 BEGIN;
 

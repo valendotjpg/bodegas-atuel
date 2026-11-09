@@ -84,7 +84,7 @@ ROLLBACK;
    Estrategia: subconsulta por razon social para obtener el CUIT.
    Trigger: cada cambio de precio dispara trg_vino_auditar_precio (RN-13) y
    deja una fila en Auditoria por vino.
-   Filas afectadas: 26 vinos y 26 filas nuevas en Auditoria.
+   Filas afectadas: 29 vinos y 29 filas nuevas en Auditoria.
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -110,7 +110,7 @@ ROLLBACK;
        viceversa, en una sola sentencia.
    Estrategia: un solo UPDATE con CASE. Como cada fila se evalua con su valor
    original, no hace falta un valor intermedio.
-   Filas afectadas: 11 (8 lunes y 3 miercoles).
+   Filas afectadas: 12 (8 lunes y 4 miercoles).
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -138,8 +138,7 @@ ROLLBACK;
    tambien los vinos que nunca se vendieron (0 botellas). Desempate por
    cod_vino para que siempre sean exactamente 10.
    Trigger: deja 10 filas en Auditoria (RN-13).
-   Filas afectadas: 10. Con la carga actual todos los vinos vendieron 2400
-   botellas, asi que decide el desempate (cod_vino 1 a 10).
+   Filas afectadas: 10 (los menos vendidos tienen entre 284 y 324 botellas).
 --------------------------------------------------------------------------- */
 BEGIN;
 

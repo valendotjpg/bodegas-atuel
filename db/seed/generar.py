@@ -143,11 +143,13 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                 for batch in chunks(finca_rows, 1000):
                     finca_ids.extend(insert_returning(cur, "Finca", ["nombre", "superficie_ha", "departamento", "provincia"], batch, "id_finca"))
 
+                # D2: la ultima cepa del catalogo no se planta ni compone vinos
+                cepas_en_uso = cepa_ids[:-1]
                 parcela_rows = []
                 parcela_refs = []
                 for finca_id in finca_ids:
                     for nro in range(1, args.parcelas_por_finca + 1):
-                        parcela_rows.append((finca_id, nro, Decimal("5.00"), 2000 + nro, random.choice(cepa_ids)))
+                        parcela_rows.append((finca_id, nro, Decimal("5.00"), 2000 + nro, random.choice(cepas_en_uso)))
                         parcela_refs.append((finca_id, nro))
                 copy_rows(cur, "Parcela", ["id_finca", "nro_parcela", "superficie", "anio_plantacion", "id_cepa"], parcela_rows)
 
@@ -159,7 +161,7 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                 vino_ids = []
                 for batch in chunks(vino_rows, 1000):
                     vino_ids.extend(insert_returning(cur, "Vino", ["anada", "tipo", "nombre_comercial", "precio", "graduacion", "volumen_ml", "cuit_bodega"], batch, "cod_vino"))
-                composition = [(vino_id, cepa_ids[i % len(cepa_ids)], Decimal("100.00")) for i, vino_id in enumerate(vino_ids)]
+                composition = [(vino_id, cepas_en_uso[i % len(cepas_en_uso)], Decimal("100.00")) for i, vino_id in enumerate(vino_ids)]
                 copy_rows(cur, "Composicion", ["cod_vino", "id_cepa", "porcentaje"], composition)
                 vino_maridaje = [(vino_id, maridaje_ids[i % len(maridaje_ids)]) for i, vino_id in enumerate(vino_ids)]
                 copy_rows(cur, "Vino_Maridaje", ["cod_vino", "id_maridaje"], vino_maridaje)
@@ -230,20 +232,36 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                 deposito_id = deposito_ids[0]
                 stock_deposito = [(deposito_id, vino_id, 100000) for vino_id in vino_ids]
                 copy_rows(cur, "Stock_Deposito", ["id_deposito", "cod_vino", "cantidad"], stock_deposito)
-                ingreso_rows = [(random.choice(["en_confeccion", "terminado"]), date(2024, 1, 1) + timedelta(days=i % 300), bodega_ids[i % len(bodega_ids)], transport_ids[i % len(transport_ids)]) for i in range(args.ingresos)]
+                # Ultimos 2 anios hasta hoy (I1, S7, D5), con los tres estados y
+                # transportistas con actividad desigual (unos mucho, otros casi nada)
+                ingreso_rows = [
+                    (random.choice(["en_confeccion", "terminado", "procesado"]),
+                     HOY - timedelta(days=i % 730),
+                     bodega_ids[i % len(bodega_ids)],
+                     transport_ids[int(len(transport_ids) * random.random() ** 2)])
+                    for i in range(args.ingresos)
+                ]
                 ingreso_ids = []
                 for batch in chunks(ingreso_rows, 1000):
                     ingreso_ids.extend(insert_returning(cur, "Ingreso", ["estado", "fecha_ingreso", "cuit_bodega", "cod_transporte"], batch, "cod_ingreso"))
                 ingreso_lines = [(ingreso_id, vino_ids[i % len(vino_ids)], 100 + i % 100) for i, ingreso_id in enumerate(ingreso_ids)]
                 copy_rows(cur, "Ingreso_Vino", ["cod_ingreso", "cod_vino", "cantidad"], ingreso_lines)
 
-                transfer_rows = [("en_confeccion", date(2024, 6, 1), sala_ids[i % len(sala_ids)]) for i in range(args.transferencias)]
+                # Ultimo anio hasta hoy (S4) y con los tres estados (S5)
+                transfer_rows = [
+                    (random.choice(["en_confeccion", "terminado", "procesado"]),
+                     HOY - timedelta(days=i % 365),
+                     sala_ids[i % len(sala_ids)])
+                    for i in range(args.transferencias)
+                ]
                 transfer_ids = []
                 for batch in chunks(transfer_rows, 1000):
                     transfer_ids.extend(insert_returning(cur, "Transferencia", ["estado", "fecha", "id_sala"], batch, "nro_solicitud"))
-                transfer_lines = [(transfer_id, vino_ids[i % len(vino_ids)], 10 + i % 20) for i, transfer_id in enumerate(transfer_ids)]
+                transfer_lines = [(transfer_id, vino_ids[int(len(vino_ids) * random.random() ** 2)], 10 + i % 20) for i, transfer_id in enumerate(transfer_ids)]
                 copy_rows(cur, "Transferencia_Vino", ["nro_solicitud", "cod_vino", "cantidad"], transfer_lines)
 
+                # D4 y D6: 1 de cada 20 clientes nunca compra
+                compradores = [cliente_id for k, cliente_id in enumerate(cliente_ids) if k % 20 != 0]
                 sales_stock = defaultdict(int)
                 price_by_vino = {vino_id: row[3] for vino_id, row in zip(vino_ids, vino_rows)}
                 for start in range(0, args.comprobantes, 1000):
@@ -251,14 +269,20 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                     comp_rows = []
                     detail_sets = []
                     for offset in range(size):
-                        client_id = cliente_ids[(start + offset) % len(cliente_ids)]
+                        client_id = compradores[(start + offset) % len(compradores)]
                         sala_id = sala_ids[(start + offset) % len(sala_ids)]
+                        # U5, S1, S11: los primeros vinos se venden mucho mas que los ultimos
+                        base = int(len(vino_ids) * random.random() ** 2)
                         details = []
                         subtotal = Decimal("0")
                         total = Decimal("0")
                         pct = cliente_descuento[client_id]
                         for line in range(4):
-                            vino_id = vino_ids[(start + offset + line) % len(vino_ids)]
+                            idx = (base + line) % len(vino_ids)
+                            # S2: el 40 % de los vinos (los ultimos) solo se vende en 1 de cada 3 salas
+                            if idx >= len(vino_ids) * 6 // 10 and ((start + offset) % len(sala_ids)) % 3 != 0:
+                                idx -= len(vino_ids) * 6 // 10
+                            vino_id = vino_ids[idx]
                             quantity = 1 + (start + offset + line) % 3
                             price = price_by_vino[vino_id]
                             # Mismo calculo que fn_total_comprobante y los triggers del 005
@@ -267,8 +291,8 @@ def load(args: argparse.Namespace) -> dict[str, int | float]:
                             total += line_total
                             details.append((vino_id, quantity, price, pct, line_total))
                             sales_stock[(sala_id, vino_id)] += quantity
-                        # Comprobantes de los ultimos 3 anios hasta hoy (consultas de ultima semana/trimestre)
-                        fecha = HOY - timedelta(days=(start + offset) % 1095)
+                        # Ultimos 7 anios hasta hoy: hay ventas de la ultima semana (S3) y de mas de 5 anios (D1)
+                        fecha = HOY - timedelta(days=(start + offset) % 2555)
                         comp_rows.append((fecha, subtotal, subtotal - total, total, sala_id, client_id))
                         detail_sets.append(details)
                     comp_ids = insert_returning(cur, "Comprobante", ["fecha", "subtotal", "descuento", "total", "id_sala", "id_cliente"], comp_rows, "nro_comprobante")

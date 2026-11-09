@@ -15,7 +15,7 @@
 \set cliente_i3 '\'Cliente 018999\''
 \set sala_i3 1
 \set bodega_i6 '\'Bodega 001\''
-\set vino_i6 '\'Reserva Atuel 00015\''
+\set vino_i6 '\'Reserva Atuel 00028\''
 \set volumen_i6 750
 \set transportista_i6 '\'Transportes Atuel 0001\''
 
@@ -28,8 +28,8 @@
    ultimos 3 meses (CURRENT_DATE - 3 meses). LEFT JOIN para incluir a los que
    no hicieron envios (0). Desempate por cod_transporte. ON CONFLICT evita
    duplicar la cobertura si ya existe (la PK es compuesta).
-   Filas afectadas: 1. Con la carga actual no hay ingresos en el ultimo
-   trimestre: todos tienen 0 envios y gana el desempate.
+   Filas afectadas: 1 (el transportista con menos envios en el trimestre
+   tiene 5).
 --------------------------------------------------------------------------- */
 BEGIN;
 
@@ -78,7 +78,7 @@ ROLLBACK;
    Estrategia: INSERT ... SELECT ... WHERE EXISTS crea el maridaje solo si hay
    algun vino que cumpla; despues INSERT ... SELECT asocia todos esos vinos.
    ON CONFLICT porque nombre_maridaje es UNIQUE y la asociacion tiene PK.
-   Filas afectadas: 1 maridaje y 82 asociaciones.
+   Filas afectadas: 1 maridaje y 76 asociaciones.
 --------------------------------------------------------------------------- */
 BEGIN;
 
