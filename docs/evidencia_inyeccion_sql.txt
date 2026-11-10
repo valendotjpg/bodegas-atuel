@@ -1,0 +1,21 @@
+# Intento de inyeccion SQL contra la API publica (etapa 6, paso 9)
+# URL: https://bodegas-atuel.onrender.com  Fecha: 10/11/2026
+# El filtro q de GET /api/vinos se arma en api/repositories.py con un
+# parametro de psycopg (v.nombre_comercial ILIKE %s), nunca concatenando texto.
+
+== q=Reserva (busqueda normal, limit=100) ==
+HTTP 200, 100 vinos
+
+== q=' OR '1'='1 (intento clasico de inyeccion) ==
+HTTP 200, 0 vinos
+El texto llega a la base como un valor: se buscan vinos cuyo nombre contenga
+literalmente "' OR '1'='1" y no hay ninguno. Si se concatenara, la condicion
+seria siempre verdadera y devolveria todos los vinos.
+
+== q='; DROP TABLE vino; --   y   GET /api/vinos/1 OR 1=1 ==
+HTTP 403 en los dos: los bloquea el firewall de Render antes de llegar a la
+API, asi que en la nube no prueban nada sobre el codigo. Para la defensa se
+repiten en local (docker compose, sin firewall).
+
+== Despues de las pruebas ==
+GET /api/vinos?limit=1 -> HTTP 200, la tabla vino sigue con datos.
