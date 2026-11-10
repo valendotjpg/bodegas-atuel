@@ -127,11 +127,12 @@ BEGIN
     END IF;
 
     FOR v_item IN
-        SELECT cod_vino, cantidad
-          FROM Transferencia_Vino
+        SELECT t.cod_vino, t.cantidad, v.nombre_comercial
+          FROM Transferencia_Vino t
+               LEFT JOIN Vino v ON v.cod_vino = t.cod_vino
          WHERE nro_solicitud = p_nro_solicitud
-         ORDER BY cod_vino
-         FOR UPDATE
+          ORDER BY t.cod_vino
+          FOR UPDATE OF t
     LOOP
         IF v_item.cantidad <= 0 THEN
             RAISE EXCEPTION
@@ -148,7 +149,8 @@ BEGIN
 
         IF NOT FOUND OR v_stock < v_item.cantidad THEN
             RAISE EXCEPTION
-                'Stock insuficiente del vino % en el deposito % (RN-11)',
+                'Stock insuficiente del vino % (codigo %) en el deposito % (RN-11)',
+                v_item.nombre_comercial,
                 v_item.cod_vino,
                 p_id_deposito;
         END IF;

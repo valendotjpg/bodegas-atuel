@@ -21,7 +21,7 @@ EXECUTE FUNCTION fn_trg_comprobante_inicial();
 
 
 -- RN-06, RN-08, RN-09: valida stock (bloquea la fila con FOR UPDATE) y completa precio, descuento y subtotal
-CREATE FUNCTION fn_trg_detalle_validar()
+CREATE OR REPLACE FUNCTION fn_trg_detalle_validar()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -30,6 +30,7 @@ DECLARE
     v_id_cliente INT;
     v_precio     NUMERIC(10,2);
     v_stock      INT;
+    v_nombre     TEXT;
 BEGIN
     SELECT id_sala, id_cliente
       INTO v_id_sala, v_id_cliente
@@ -41,8 +42,8 @@ BEGIN
             USING ERRCODE = 'foreign_key_violation';
     END IF;
 
-    SELECT precio
-      INTO v_precio
+    SELECT precio, nombre_comercial
+      INTO v_precio, v_nombre
       FROM Vino
      WHERE cod_vino = NEW.cod_vino;
 
@@ -61,8 +62,8 @@ BEGIN
     v_stock := COALESCE(v_stock, 0);
 
     IF v_stock < NEW.cantidad THEN
-        RAISE EXCEPTION 'Stock insuficiente del vino % en la sala %: hay %, se piden % (RN-09)',
-            NEW.cod_vino, v_id_sala, v_stock, NEW.cantidad
+        RAISE EXCEPTION 'Stock insuficiente del vino % (codigo %) en la sala %: hay %, se piden % (RN-09)',
+            v_nombre, NEW.cod_vino, v_id_sala, v_stock, NEW.cantidad
             USING ERRCODE = 'raise_exception';
     END IF;
 
