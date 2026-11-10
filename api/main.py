@@ -376,13 +376,11 @@ def depositos(pool: Pool):
         return list_depositos(conn)
 
 
-# Doble montaje del mismo router: raiz + /api.
-app.include_router(api_router)
-app.include_router(api_router, prefix="/api")
-
 # Despliegue en la nube (etapa 8): cuando la imagen incluye el front compilado en
 # front_dist/, esta misma API lo sirve (misma URL publica, sin CORS). En local y
 # en docker compose no existe esa carpeta y las rutas no cambian.
+# Se registran antes que la API: /transferencias y /vinos/nuevo tambien existen
+# como rutas de la API en la raiz y ganaria la primera que se registra.
 FRONT_DIST = Path(__file__).resolve().parent / "front_dist"
 if FRONT_DIST.is_dir():
     app.mount("/assets", StaticFiles(directory=FRONT_DIST / "assets"), name="assets")
@@ -394,3 +392,8 @@ if FRONT_DIST.is_dir():
     @app.get("/tablero", include_in_schema=False)
     def front(cod_vino: int | None = None):
         return FileResponse(FRONT_DIST / "index.html")
+
+# Doble montaje del mismo router: raiz (proxies de nginx y vite, que quitan /api)
+# y /api (front servido por esta misma API en la nube).
+app.include_router(api_router)
+app.include_router(api_router, prefix="/api")
