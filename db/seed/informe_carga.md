@@ -83,18 +83,24 @@ Para que las consultas de la etapa 5 tengan resultados:
 Para repetir la misma carga se usa el mismo `--seed` sobre una base vacía.
 Las fechas recientes (comprobantes y campañas) se calculan desde el día de la
 carga, porque las consultas usan `CURRENT_DATE`.
-`medir_carga.py` compara `executemany` fila a fila con `COPY` y registra los
-tiempos en la salida estándar. Los resultados deben copiarse a esta sección
-después de ejecutar la medición en la base del equipo.
+`medir_carga.py` compara `executemany` fila a fila con `COPY` (resultados en
+«Verificación ejecutada»: `COPY` es 28 veces más rápido).
+
+La carga completa por defecto se hace con un solo comando sobre la base recién
+creada, y usa el rol propietario porque deshabilita los triggers:
+
+```bash
+docker compose run --rm seed
+```
+
+Medida sobre un clon limpio del repositorio: 600.000 renglones, 150.000
+comprobantes y 20.000 clientes en 26,5 s de carga (37 s contando el arranque
+del contenedor), con `controles.sql` en cero.
 
 ## Volcado
 
 Después de cargar y validar, con el usuario dueño (el rol de la API no puede
 leer `Auditoria` ni crear tablas, así que no sirve para el volcado):
-Para cargar los datos usamos:
-python db/seed/generar.py --dsn "postgresql://bodegas_owner:TU_CLAVE@localhost:5432/bodegas"
-
-Después de cargar y validar:
 
 ```bash
 docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=plain --no-owner | gzip > /tmp/dump_completo.sql.gz'

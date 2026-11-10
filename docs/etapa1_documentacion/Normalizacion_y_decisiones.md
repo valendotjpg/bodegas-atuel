@@ -2,7 +2,7 @@
 
 Etapa 1 · Modelo relacional · Grupo 7
 
-Este documento justifica que el esquema físico (`db/migrations/001_esquema.sql` y `002_constraints.sql`: 32 tablas) está en **Tercera Forma Normal (3FN)** y explica las decisiones de diseño tomadas al pasar del DER al modelo relacional. Complementa al diccionario de datos (`Diccionario de datos.md`) y a los diagramas de esta carpeta.
+Este documento justifica que el esquema físico (`db/migrations/001_esquema.sql` y `002_constraints.sql`: 32 tablas) está en **Tercera Forma Normal (3FN)** y explica las decisiones de diseño tomadas al pasar del DER al modelo relacional. Complementa al diccionario de datos (`Diccionario_de_datos.md`) y a los diagramas de esta carpeta.
 
 ---
 

@@ -5,9 +5,9 @@ Diccionario de datos
 
 **Tipos propios:** estado\_documento es un ENUM con los valores en\_confeccion, terminado y procesado. cuit\_dom es un DOMAIN basado en CHAR(11) que admite solo 11 dígitos. Los importes usan NUMERIC (nunca FLOAT).
 
-**Claves**: se usan claves naturales para el CUIT (bodega, empleado) y el código postal (localidad), porque son identificadores estables y únicos del dominio. El resto de las tablas usa claves subrogadas autoincrementales (IDENTITY).
+**Claves**: se usan claves naturales para el CUIT (bodega, empleado) y el código postal (localidad), porque son identificadores estables y únicos del dominio. El resto de las tablas usa claves subrogadas autoincrementales (IDENTITY o SERIAL, según la tabla).
 
-**Acciones referenciales**: ON DELETE RESTRICT en las entidades de negocio y en los movimientos (RN-14). ON DELETE CASCADE solo en tablas dependientes que no existen sin su tabla principal (renglones, teléfonos, composición, vino-maridaje, permisos, análisis, parcelas y subtipos de cliente). ON UPDATE CASCADE solo en claves foráneas hacia claves naturales; las claves IDENTITY no se modifican.
+**Acciones referenciales**: ON DELETE RESTRICT en las entidades de negocio y en los movimientos (RN-14). ON DELETE CASCADE solo en tablas dependientes que no existen sin su tabla principal (renglones, teléfonos, composición, vino-maridaje, permisos, análisis, parcelas y subtipos de cliente). ON DELETE CASCADE también en Vino\_maridaje → Maridaje, Transportista\_Localidad → Localidad y Stock\_Deposito → Deposito\_Central, por ser tablas de asociación. ON UPDATE CASCADE en las claves foráneas de Vino → Bodega y hacia Localidad (encargado, sala y cliente). Las claves subrogadas no se modifican.
 
 **Atributos derivados**: subtotal, descuento y total del comprobante y subtotal\_renglon del detalle se almacenan, pero los calcula la base (RN-08). La antigüedad del empleado no se almacena: se calcula con fn\_antiguedad\_anios.
 
@@ -19,7 +19,7 @@ Tabla: Localidad
 
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| cod\_postal | VARCHAR(20) | PK | No |  | Código postal de la localidad  |  |
+| cod\_postal | INT | PK | No |  | Código postal de la localidad  |  |
 | nombre | VARCHAR(50) |  | No |  | Nombre de la localidad |  |
 | provincia | VARCHAR(50) |  | No |  | Provincia a la que pertenece |  |
 
@@ -32,7 +32,7 @@ Tabla: Encargado
 | id\_encargado | INT | PK | No |  | ID único del encargado | Autoincremental (IDENTITY) |
 | nombre | VARCHAR(50) |  | No |  | Nombre del encargado |  |
 | apellido | VARCHAR(50) |  | No |  | Apellido del encargado |  |
-| cod\_postal | VARCHAR(20) | FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad de la que es responsable | UNIQUE (un solo encargado por localidad, RN-02) |
+| cod\_postal | INT | FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad de la que es responsable | UNIQUE (un solo encargado por localidad, RN-02) |
 
 Tabla: Sala\_Venta
 
@@ -44,7 +44,7 @@ Tabla: Sala\_Venta
 | calle | VARCHAR(50) |  | No |  | Domicilio de la sala: calle |  |
 | numero | INT |  | No |  | Domicilio de la sala: numeración | CHECK (numero \> 0\) |
 | dia\_cierre | VARCHAR(20) |  | No |  | Día de cierre semanal de la sala | CHECK (dia\_cierre IN ('lunes','martes','miercoles','jueves','viernes','sabado','domingo')) |
-| cod\_postal | VARCHAR(20) | FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad donde está la sala (RN-02) |  |
+| cod\_postal | INT | FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad donde está la sala (RN-02) |  |
 
 Tabla: Empleado
 
@@ -67,7 +67,7 @@ Tabla: Finca
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | id\_finca | INT | PK | No |  | ID único de la finca | Autoincremental (IDENTITY) |
 | nombre | VARCHAR(50) |  | No |  | Nombre de la finca |  |
-| superficie\_ha | NUMERIC(8,2) |  | No |  | Superficie total en hectáreas | CHECK (superficie\_ha \> 0\) (RN-15) |
+| superficie\_ha | NUMERIC(10,2) |  | No |  | Superficie total en hectáreas | CHECK (superficie\_ha \> 0\) (RN-15) |
 | departamento | VARCHAR(50) |  | No |  | Departamento donde se ubica |  |
 | provincia | VARCHAR(50) |  | No |  | Provincia donde se ubica |  |
 
@@ -114,7 +114,7 @@ Tabla: Lote
 | campania | SMALLINT |  | No |  | Campaña (año de cosecha) | UNIQUE (id\_finca, nro\_parcela, campania) (RN-04)CHECK (campania \= EXTRACT(YEAR FROM fecha\_cosecha)) |
 | fecha\_cosecha | DATE |  | No |  | Fecha de cosecha |  |
 | kilos | NUMERIC(10,2) |  | No |  | Kilos cosechados | CHECK (kilos \> 0\) (RN-15) |
-| cuit\_bodega | cuit\_dom | FK | No | Bodega.cuit\_bodegaON DELETE RESTRICTON UPDATE CASCADE | Bodega a la que fue entregado el lote |  |
+| cuit\_bodega | cuit\_dom | FK | No | Bodega.cuit\_bodegaON DELETE RESTRICT | Bodega a la que fue entregado el lote |  |
 | id\_finca | INT | FK | No | Parcela(id\_finca, nro\_parcela)ON DELETE RESTRICT | Finca de la parcela cosechada (FK compuesta, una sola con nro\_parcela) | Parte del UNIQUE |
 | nro\_parcela | INT | FK | No | (parte de la FK compuesta a Parcela) | Parcela cosechada | Parte del UNIQUE |
 
@@ -163,7 +163,7 @@ Tabla: Maridaje
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | id\_maridaje | INT | PK | No |  | ID único del maridaje | Autoincremental (IDENTITY) |
-| nombre | VARCHAR(50) |  | No |  | Nombre del maridaje (ej. carnes rojas) | UNIQUE |
+| nombre\_maridaje | VARCHAR(50) |  | No |  | Nombre del maridaje (ej. carnes rojas) | UNIQUE |
 | temperatura\_servicio | NUMERIC(4,2) |  | No |  | Temperatura de servicio sugerida en °C | CHECK (temperatura\_servicio BETWEEN 0 AND 30\) |
 
 Tabla: Vino\_maridaje
@@ -173,7 +173,7 @@ Tabla: Vino\_maridaje
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | cod\_vino | INT | PK, FK | No | Vino.cod\_vinoON DELETE CASCADE | Vino |  |
-| id\_maridaje | INT | PK, FK | No | Maridaje.id\_maridajeON DELETE RESTRICT | Maridaje recomendado |  |
+| id\_maridaje | INT | PK, FK | No | Maridaje.id\_maridajeON DELETE CASCADE | Maridaje recomendado |  |
 
 Tabla: Cliente
 
@@ -182,13 +182,15 @@ Tabla: Cliente
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | id\_cliente | INT | PK | No |  | ID único del cliente | Autoincremental (IDENTITY) |
-| razon\_social | VARCHAR(100) |  | No |  | Apellido y nombre, o razón social, del cliente |  |
+| apellido | VARCHAR(50) |  | Sí |  | Apellido del cliente (persona) | CHECK (razon\_social IS NOT NULL OR (apellido IS NOT NULL AND nombre IS NOT NULL)) |
+| nombre | VARCHAR(50) |  | Sí |  | Nombre del cliente (persona) | Mismo CHECK que apellido |
+| razon\_social | VARCHAR(100) |  | Sí |  | Razón social del cliente (empresa) | Mismo CHECK: razón social, o apellido y nombre |
 | tipo\_documento | VARCHAR(10) |  | No |  | Tipo de documento | CHECK (tipo\_documento IN ('DNI','CUIT','CUIL','PASAPORTE'))Parte del UNIQUE (tipo\_documento, nro\_documento) |
 | nro\_documento | VARCHAR(20) |  | No |  | Número de documento | Parte del UNIQUE (tipo\_documento, nro\_documento) |
 | fecha\_alta | DATE |  | No |  | Fecha de alta del cliente | DEFAULT CURRENT\_DATE |
 | calle | VARCHAR(50) |  | No |  | Domicilio: calle |  |
 | numero | INT |  | No |  | Domicilio: numeración | CHECK (numero \> 0\) |
-| cod\_postal | VARCHAR(20) | FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad del cliente |  |
+| cod\_postal | INT | FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad del cliente |  |
 
 Tabla: Socio
 
@@ -197,6 +199,7 @@ Tabla: Socio
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | id\_cliente | INT | PK, FK | No | Cliente.id\_clienteON DELETE CASCADE | Cliente que es socio | Un cliente pertenece a un solo subtipo |
+| porcentaje\_descuento | NUMERIC(5,2) |  | No |  | Porcentaje de descuento del socio (RN-06); lo lee fn\_descuento\_cliente | DEFAULT 10CHECK (porcentaje\_descuento BETWEEN 0 AND 100) |
 
 Tabla: Distribuidor
 
@@ -205,6 +208,7 @@ Tabla: Distribuidor
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | id\_cliente | INT | PK, FK | No | Cliente.id\_clienteON DELETE CASCADE | Cliente que es distribuidor | Un cliente pertenece a un solo subtipo |
+| porcentaje\_descuento | NUMERIC(5,2) |  | No |  | Porcentaje de descuento del distribuidor (RN-06); lo lee fn\_descuento\_cliente | DEFAULT 20CHECK (porcentaje\_descuento BETWEEN 0 AND 100) |
 | zona\_cobertura | VARCHAR(50) |  | No |  | Zona de cobertura del distribuidor |  |
 | nro\_habilitacion | VARCHAR(20) |  | No |  | Número de habilitación | UNIQUE |
 
@@ -215,6 +219,7 @@ Tabla: Exportador
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | id\_cliente | INT | PK, FK | No | Cliente.id\_clienteON DELETE CASCADE | Cliente que es exportador | Un cliente pertenece a un solo subtipo |
+| porcentaje\_descuento | NUMERIC(5,2) |  | No |  | Porcentaje de descuento del exportador (RN-06); lo lee fn\_descuento\_cliente | DEFAULT 30CHECK (porcentaje\_descuento BETWEEN 0 AND 100) |
 | pais\_destino | VARCHAR(50) |  | No |  | País de destino principal |  |
 
 Tabla: Permiso\_exportacion
@@ -284,7 +289,7 @@ Tabla: Transportista\_Localidad
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | cod\_transporte | INT | PK, FK | No | Transportista.cod\_transporteON DELETE CASCADE | Transportista |  |
-| cod\_postal | VARCHAR(20) | PK, FK | No | Localidad.cod\_postalON DELETE RESTRICTON UPDATE CASCADE | Localidad cubierta por el servicio |  |
+| cod\_postal | INT | PK, FK | No | Localidad.cod\_postalON DELETE CASCADE | Localidad cubierta por el servicio |  |
 
 Tabla: Ingreso
 
@@ -295,7 +300,7 @@ Tabla: Ingreso
 | cod\_ingreso | INT | PK | No |  | Código único de ingreso | Autoincremental (IDENTITY) |
 | estado | estado\_documento |  | No |  | Estado del ingreso: en\_confeccion, terminado o procesado | DEFAULT 'en\_confeccion'Transiciones controladas por trigger (RN-10) |
 | fecha\_ingreso | DATE |  | No |  | Fecha del ingreso | DEFAULT CURRENT\_DATE |
-| cuit\_bodega | cuit\_dom | FK | No | Bodega.cuit\_bodegaON DELETE RESTRICTON UPDATE CASCADE | Bodega de origen (RN-14) |  |
+| cuit\_bodega | cuit\_dom | FK | No | Bodega.cuit\_bodegaON DELETE RESTRICT | Bodega de origen (RN-14) |  |
 | cod\_transporte | INT | FK | No | Transportista.cod\_transporteON DELETE RESTRICT | Transportista que efectuó el traslado (RN-14) |  |
 
 Tabla: Ingreso\_vino
@@ -324,7 +329,7 @@ Tabla: Stock\_Deposito
 | Campo | Tipo | Clave | Nulo | Referencia | Descripción | Restricciones |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | cod\_vino | INT | PK, FK | No | Vino.cod\_vinoON DELETE RESTRICT | Vino |  |
-| id\_deposito | INT | PK, FK | No | Deposito\_central.id\_depositoON DELETE RESTRICT | Depósito |  |
+| id\_deposito | INT | PK, FK | No | Deposito\_central.id\_depositoON DELETE CASCADE | Depósito |  |
 | cantidad | INT |  | No |  | Botellas disponibles en el depósito | DEFAULT 0CHECK (cantidad \>= 0\) (RN-15) |
 
 Tabla: Sala\_Venta\_Vino

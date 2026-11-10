@@ -201,7 +201,8 @@ Detalle: [`db/seed/informe_carga.md`](../db/seed/informe_carga.md) y
   el mismo cálculo que la base (precio del vino, descuento del tipo de cliente,
   subtotal y total).
 - **Tiempos:** con `COPY` la carga es 28 veces más rápida que con `executemany`
-  (0,067 s contra 1,895 s para 10.000 filas, medido con `medir_carga.py`).
+  (0,067 s contra 1,895 s para 10.000 filas, medido con `medir_carga.py`). La carga completa
+  (600.000 renglones) tarda 26,5 s, medida sobre un clon limpio del repositorio.
 - **Consultas de control** (`controles.sql`): 0 vinos sin bodega, 0 stocks
   negativos, 0 renglones huérfanos, 0 totales incorrectos, 0 descuentos
   distintos al tipo de cliente y 0 subtotales incorrectos.
