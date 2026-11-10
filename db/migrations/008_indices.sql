@@ -1,7 +1,7 @@
 -- Etapa 4: indices. Cada uno cita la consulta que lo motiva y la evidencia
--- (planes EXPLAIN (ANALYZE, BUFFERS) antes/despues en docs/rendimiento/).
+-- (planes EXPLAIN (ANALYZE, BUFFERS) antes/despues en docs/etapa4_rendimiento/).
 -- Los indices que se evaluaron y no aportaron estan en
--- docs/rendimiento/indices_descartados.sql y NO se crean aca.
+-- docs/etapa4_rendimiento/indices_descartados.sql y NO se crean aca.
 
 -- S8. Monto total de ventas por sala en el ultimo trimestre.
 -- Un solo rango sobre fecha; id_sala y total van en INCLUDE para resolverla
