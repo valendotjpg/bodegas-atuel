@@ -117,7 +117,7 @@ docker compose up -d
 | H6 | API | completado |
 | H7 | Front | completado |
 | H8 | Nube | completado (`https://bodegas-atuel.onrender.com`, informe en `docs/etapa8_despliegue/`) |
-| H9 | Documentacion y defensa | en curso (`docs/informe_final.md`) |
+| H9 | Documentacion y defensa | completado (informe en `docs/informe_final.md`, demo en `docs/etapa9_demo/guion_demo.md`) |
 
 ## Flujo de trabajo
 
