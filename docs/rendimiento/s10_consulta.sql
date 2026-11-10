@@ -17,24 +17,6 @@ WITH rendimiento AS (
       FROM Lote l
       JOIN Parcela p ON p.id_finca = l.id_finca AND p.nro_parcela = l.nro_parcela
 )
-SELECT r.id_finca, r.nro_parcela, r.campania, r.kg_por_ha,
-       ROUND((SELECT AVG(r2.kg_por_ha)
-                FROM rendimiento r2
-               WHERE r2.id_finca = r.id_finca
-                 AND r2.campania = r.campania), 2) AS promedio_finca,
-       r.kg_por_ha < (SELECT AVG(r2.kg_por_ha)
-                        FROM rendimiento r2
-                       WHERE r2.id_finca = r.id_finca
-                         AND r2.campania = r.campania) AS rinde_menos
-  FROM rendimiento r
- ORDER BY r.id_finca, r.campania, r.nro_parcela
- LIMIT 10;  -- para mostrar solo los primeros 10 resultados
- WITH rendimiento AS (
-    SELECT l.id_finca, l.nro_parcela, l.campania,
-           ROUND(l.kilos / p.superficie, 2) AS kg_por_ha
-      FROM Lote l
-      JOIN Parcela p ON p.id_finca = l.id_finca AND p.nro_parcela = l.nro_parcela
-)
 SELECT count(*) AS parcelas_que_rinden_menos_que_su_finca
   FROM rendimiento r
  WHERE r.kg_por_ha < (SELECT AVG(r2.kg_por_ha)

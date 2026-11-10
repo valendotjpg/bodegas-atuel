@@ -1,45 +1,37 @@
 ﻿ANALYZE
                                                             QUERY PLAN                                                             
 -----------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=383.36..2883.83 rows=10 width=75) (actual time=3.682..7.068 rows=10 loops=1)
+ Aggregate  (cost=625366.98..625366.99 rows=1 width=8) (actual time=915.595..915.600 rows=1 loops=1)
    Buffers: shared hit=49
    CTE rendimiento
-     ->  Hash Join  (cost=32.00..175.31 rows=5000 width=42) (actual time=0.389..2.119 rows=5000 loops=1)
+     ->  Hash Join  (cost=32.00..175.31 rows=5000 width=42) (actual time=220.151..221.463 rows=5000 loops=1)
            Hash Cond: ((l.id_finca = p.id_finca) AND (l.nro_parcela = p.nro_parcela))
            Buffers: shared hit=49
-           ->  Seq Scan on lote l  (cost=0.00..92.00 rows=5000 width=15) (actual time=0.004..0.221 rows=5000 loops=1)
+           ->  Seq Scan on lote l  (cost=0.00..92.00 rows=5000 width=15) (actual time=0.011..0.232 rows=5000 loops=1)
                  Buffers: shared hit=42
-           ->  Hash  (cost=17.00..17.00 rows=1000 width=13) (actual time=0.337..0.337 rows=1000 loops=1)
+           ->  Hash  (cost=17.00..17.00 rows=1000 width=13) (actual time=220.116..220.118 rows=1000 loops=1)
                  Buckets: 1024  Batches: 1  Memory Usage: 55kB
                  Buffers: shared hit=7
-                 ->  Seq Scan on parcela p  (cost=0.00..17.00 rows=1000 width=13) (actual time=0.041..0.238 rows=1000 loops=1)
+                 ->  Seq Scan on parcela p  (cost=0.00..17.00 rows=1000 width=13) (actual time=219.943..220.018 rows=1000 loops=1)
                        Buffers: shared hit=7
-   ->  Result  (cost=208.05..1250445.55 rows=5000 width=75) (actual time=3.681..7.062 rows=10 loops=1)
+   ->  CTE Scan on rendimiento r  (cost=0.00..625187.50 rows=1667 width=0) (actual time=222.324..915.309 rows=2500 loops=1)
+         Filter: (kg_por_ha < (SubPlan 2))
+         Rows Removed by Filter: 2500
          Buffers: shared hit=49
-         ->  Sort  (cost=208.05..220.55 rows=5000 width=42) (actual time=3.241..3.243 rows=10 loops=1)
-               Sort Key: r.id_finca, r.campania, r.nro_parcela
-               Sort Method: top-N heapsort  Memory: 25kB
-               Buffers: shared hit=49
-               ->  CTE Scan on rendimiento r  (cost=0.00..100.00 rows=5000 width=42) (actual time=0.391..2.992 rows=5000 loops=1)
-                     Buffers: shared hit=49
          SubPlan 2
-           ->  Aggregate  (cost=125.00..125.02 rows=1 width=32) (actual time=0.191..0.191 rows=1 loops=10)
-                 ->  CTE Scan on rendimiento r2  (cost=0.00..125.00 rows=1 width=32) (actual time=0.000..0.188 rows=20 loops=10)
+           ->  Aggregate  (cost=125.00..125.02 rows=1 width=32) (actual time=0.138..0.138 rows=1 loops=5000)
+                 Buffers: shared hit=41
+                 ->  CTE Scan on rendimiento r2  (cost=0.00..125.00 rows=1 width=32) (actual time=0.066..0.136 rows=20 loops=5000)
                        Filter: ((id_finca = r.id_finca) AND (campania = r.campania))
                        Rows Removed by Filter: 4980
-         SubPlan 3
-           ->  Aggregate  (cost=125.00..125.02 rows=1 width=32) (actual time=0.186..0.186 rows=1 loops=10)
-                 ->  CTE Scan on rendimiento r2_1  (cost=0.00..125.00 rows=1 width=32) (actual time=0.000..0.184 rows=20 loops=10)
-                       Filter: ((id_finca = r.id_finca) AND (campania = r.campania))
-                       Rows Removed by Filter: 4980
+                       Buffers: shared hit=41
  Planning:
-   Buffers: shared hit=83
- Planning Time: 0.698 ms
- Execution Time: 7.216 ms
-(35 rows)
-
- parcelas_que_rinden_menos_que_su_finca 
-----------------------------------------
-                                   2500
-(1 row)
+   Buffers: shared hit=117
+ Planning Time: 0.487 ms
+ JIT:
+   Functions: 27
+   Options: Inlining true, Optimization true, Expressions true, Deforming true
+   Timing: Generation 0.818 ms, Inlining 49.295 ms, Optimization 98.523 ms, Emission 72.221 ms, Total 220.857 ms
+ Execution Time: 933.710 ms
+(32 rows)
 
