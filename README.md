@@ -55,6 +55,8 @@ docker compose up -d
 | `api/` | API REST FastAPI con psycopg |
 | `front/` | Front en React + Vite (ver `front/README.md`) |
 | `docs/` | DER, diccionario de datos, informes por etapa |
+| `docs/etapa8_despliegue/` | Informe y evidencia del despliegue en Neon (etapa 8) |
+| `docs/` | DER, diccionario de datos, informes por etapa |
 
 ## Hitos
 
@@ -67,7 +69,7 @@ docker compose up -d
 | H5 | Consultas SQL | pendiente |
 | H6 | API | en desarrollo |
 | H7 | Front | pendiente |
-| H8 | Nube | pendiente |
+| H8 | Nube | en curso (base en Neon, API/front pendiente) |
 | H9 | Documentacion y defensa | pendiente |
 
 ## Flujo de trabajo
@@ -88,4 +90,23 @@ Grupo N°7:
 
 ## URL en la nube
 
-*Pendiente (etapa 8).*
+- Base de datos: **Neon**, branch `production` (region `aws-sa-east-1`,
+  conexion TLS `sslmode=require`). Roles de minimos privilegios creados con
+  `007_roles.sql`. Detalle en `docs/etapa8_despliegue/informe.md`.
+- URL publica (API + front, Render): *pendiente de importar el Blueprint
+  (`render.yaml`); la imagen `Dockerfile.deploy` ya pasa el smoke test contra
+  la base de Neon (`evidencia/06_api_despliegue.txt`).
+
+## Despliegue en la nube (resumen)
+
+```bash
+neon status                          # ver proyecto/branch vinculados
+# migraciones en orden con el rol propietario (psql 001..008, 007 lee el .env)
+python db/seed/generar.py --dsn "$NEON_DATABASE_URL" --vinos 300 --lotes 1500 \
+  --ingresos 1000 --transferencias 1000 --clientes 5000 --comprobantes 30000
+docker run --rm -v ./backups:/out postgres:18 \
+  pg_dump "$NEON_DATABASE_URL" -Fc -f /out/neon_backup_$(date +%Y%m%d_%H%M).dump
+```
+
+Detalle completo (decision de proveedor, seguridad, backup y restauracion
+verificados, pasos de Render) en `docs/etapa8_despliegue/informe.md`.

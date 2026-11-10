@@ -45,8 +45,16 @@ SELECT :'api_user' = '' AS falta_api_user,
     DO $$ BEGIN RAISE EXCEPTION 'Falta REPORT_DB_PASSWORD en el .env'; END $$;
 \endif
 
-CREATE ROLE :"api_user" LOGIN PASSWORD :'api_pass';
-CREATE ROLE :"report_user" LOGIN PASSWORD :'report_pass';
+-- Los roles se crean solo si no existen, para poder re-ejecutar la migracion
+-- en despliegues nuevos sin fallar por que ya existan (etapa 8).
+SELECT NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'api_user') AS crear_api \gset
+\if :crear_api
+    CREATE ROLE :"api_user" LOGIN PASSWORD :'api_pass';
+\endif
+SELECT NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'report_user') AS crear_report \gset
+\if :crear_report
+    CREATE ROLE :"report_user" LOGIN PASSWORD :'report_pass';
+\endif
 
 -- Rol de la API: lectura y escritura sin privilegios de propietario.
 GRANT CONNECT ON DATABASE :"DBNAME" TO :"api_user";

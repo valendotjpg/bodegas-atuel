@@ -1,0 +1,17 @@
+9.3.2
+node.exe : ÔåÆ Inspecting branch production (br-bitter-mountain-b6mondxm)
+En C:\Users\Augusto Mansalve\AppData\Roaming\npm\neon.ps1: 24 Carácter: 5
++     & "node$exe"  "$basedir/node_modules/neon/dist/cli.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ÔåÆ Inspecting ...ntain-b6mondxm):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Status
+Project           bodegas-atuel (young-boat-55271872)
+Region            aws-sa-east-1
+Postgres Version  18
+Organization      org-blue-butterfly-71145070
+Branch            production (br-bitter-mountain-b6mondxm)
+Default           yes
+Protected         no
+
