@@ -1,0 +1,80 @@
+﻿                                                                                                                                               QUERY PLAN                                                                                                                                                
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=280.77..297.33 rows=1 width=348) (actual time=1.900..1.905 rows=1 loops=1)
+   Group Key: v.cod_vino, b.razon_social, (COALESCE((sum(stock_deposito.cantidad)), '0'::bigint)), (COALESCE((sum(sala_venta_vino.cantidad)), '0'::bigint)), ((COALESCE((sum(stock_deposito.cantidad)), '0'::bigint) + COALESCE((sum(sala_venta_vino.cantidad)), '0'::bigint)))
+   Buffers: shared hit=93
+   ->  Sort  (cost=280.77..280.77 rows=1 width=407) (actual time=1.833..1.837 rows=1 loops=1)
+         Sort Key: v.cod_vino, b.razon_social, (COALESCE((sum(stock_deposito.cantidad)), '0'::bigint)), (COALESCE((sum(sala_venta_vino.cantidad)), '0'::bigint)), ((COALESCE((sum(stock_deposito.cantidad)), '0'::bigint) + COALESCE((sum(sala_venta_vino.cantidad)), '0'::bigint))), co.porcentaje DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=88
+         ->  Nested Loop  (cost=260.57..280.76 rows=1 width=407) (actual time=1.794..1.814 rows=1 loops=1)
+               Buffers: shared hit=76
+               ->  Nested Loop  (cost=260.42..280.49 rows=1 width=285) (actual time=1.783..1.802 rows=1 loops=1)
+                     Join Filter: (v.cod_vino = co.cod_vino)
+                     Buffers: shared hit=74
+                     ->  Nested Loop  (cost=260.15..280.13 rows=1 width=280) (actual time=1.771..1.789 rows=1 loops=1)
+                           Buffers: shared hit=71
+                           ->  Hash Right Join  (cost=260.01..271.89 rows=1 width=74) (actual time=1.754..1.773 rows=1 loops=1)
+                                 Hash Cond: (sala_venta_vino.cod_vino = v_1.cod_vino)
+                                 Buffers: shared hit=69
+                                 ->  HashAggregate  (cost=225.00..230.00 rows=500 width=12) (actual time=1.497..1.531 rows=500 loops=1)
+                                       Group Key: sala_venta_vino.cod_vino
+                                       Batches: 1  Memory Usage: 73kB
+                                       Buffers: shared hit=60
+                                       ->  Seq Scan on sala_venta_vino  (cost=0.00..170.00 rows=11000 width=8) (actual time=0.022..0.509 rows=11000 loops=1)
+                                             Buffers: shared hit=60
+                                 ->  Hash  (cost=34.99..34.99 rows=1 width=66) (actual time=0.208..0.211 rows=1 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       Buffers: shared hit=9
+                                       ->  Hash Right Join  (cost=23.11..34.99 rows=1 width=66) (actual time=0.191..0.207 rows=1 loops=1)
+                                             Hash Cond: (stock_deposito.cod_vino = v_1.cod_vino)
+                                             Buffers: shared hit=9
+                                             ->  HashAggregate  (cost=10.50..15.50 rows=500 width=12) (actual time=0.108..0.141 rows=500 loops=1)
+                                                   Group Key: stock_deposito.cod_vino
+                                                   Batches: 1  Memory Usage: 73kB
+                                                   Buffers: shared hit=3
+                                                   ->  Seq Scan on stock_deposito  (cost=0.00..8.00 rows=500 width=8) (actual time=0.009..0.029 rows=500 loops=1)
+                                                         Buffers: shared hit=3
+                                             ->  Hash  (cost=12.60..12.60 rows=1 width=58) (actual time=0.035..0.036 rows=1 loops=1)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                   Buffers: shared hit=6
+                                                   ->  Nested Loop  (cost=0.55..12.60 rows=1 width=58) (actual time=0.031..0.032 rows=1 loops=1)
+                                                         Buffers: shared hit=6
+                                                         ->  Index Scan using unique_nombre on vino v  (cost=0.27..8.29 rows=1 width=54) (actual time=0.022..0.023 rows=1 loops=1)
+                                                               Index Cond: ((nombre_comercial)::text = 'Reserva Atuel 00000'::text)
+                                                               Buffers: shared hit=3
+                                                         ->  Index Only Scan using vino_pkey on vino v_1  (cost=0.27..4.29 rows=1 width=4) (actual time=0.006..0.006 rows=1 loops=1)
+                                                               Index Cond: (cod_vino = v.cod_vino)
+                                                               Heap Fetches: 0
+                                                               Buffers: shared hit=3
+                           ->  Index Scan using bodega_pkey on bodega b  (cost=0.14..8.16 rows=1 width=250) (actual time=0.014..0.014 rows=1 loops=1)
+                                 Index Cond: ((cuit_bodega)::bpchar = (v.cuit_bodega)::bpchar)
+                                 Buffers: shared hit=2
+                     ->  Index Scan using composicion_pkey on composicion co  (cost=0.27..0.35 rows=1 width=13) (actual time=0.010..0.011 rows=1 loops=1)
+                           Index Cond: (cod_vino = v_1.cod_vino)
+                           Buffers: shared hit=3
+               ->  Index Scan using cepa_pkey on cepa ce  (cost=0.15..0.26 rows=1 width=122) (actual time=0.009..0.009 rows=1 loops=1)
+                     Index Cond: (id_cepa = co.id_cepa)
+                     Buffers: shared hit=2
+   SubPlan 1
+     ->  Aggregate  (cost=16.51..16.52 rows=1 width=32) (actual time=0.044..0.045 rows=1 loops=1)
+           Buffers: shared hit=5
+           ->  Sort  (cost=16.50..16.50 rows=1 width=118) (actual time=0.042..0.043 rows=1 loops=1)
+                 Sort Key: m.nombre_maridaje
+                 Sort Method: quicksort  Memory: 25kB
+                 Buffers: shared hit=5
+                 ->  Nested Loop  (cost=0.42..16.49 rows=1 width=118) (actual time=0.034..0.035 rows=1 loops=1)
+                       Buffers: shared hit=5
+                       ->  Index Only Scan using vino_maridaje_pkey on vino_maridaje vm  (cost=0.27..8.29 rows=1 width=4) (actual time=0.024..0.025 rows=1 loops=1)
+                             Index Cond: (cod_vino = v.cod_vino)
+                             Heap Fetches: 1
+                             Buffers: shared hit=3
+                       ->  Index Scan using maridaje_pkey on maridaje m  (cost=0.15..8.17 rows=1 width=122) (actual time=0.009..0.009 rows=1 loops=1)
+                             Index Cond: (id_maridaje = vm.id_maridaje)
+                             Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=508
+ Planning Time: 1.796 ms
+ Execution Time: 2.084 ms
+(76 rows)
+

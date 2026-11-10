@@ -1,0 +1,39 @@
+﻿    indexname     
+------------------
+ comprobante_pkey
+(1 row)
+
+ANALYZE
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=3805.07..3805.15 rows=30 width=36) (actual time=6.309..7.744 rows=30 loops=1)
+   Sort Key: (sum(total)) DESC
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=1246
+   ->  Finalize GroupAggregate  (cost=3800.29..3804.34 rows=30 width=36) (actual time=6.267..7.734 rows=30 loops=1)
+         Group Key: id_sala
+         Buffers: shared hit=1246
+         ->  Gather Merge  (cost=3800.29..3803.74 rows=30 width=36) (actual time=6.261..7.705 rows=60 loops=1)
+               Workers Planned: 1
+               Workers Launched: 1
+               Buffers: shared hit=1246
+               ->  Sort  (cost=2800.28..2800.35 rows=30 width=36) (actual time=4.796..4.798 rows=30 loops=2)
+                     Sort Key: id_sala
+                     Sort Method: quicksort  Memory: 27kB
+                     Buffers: shared hit=1246
+                     Worker 0:  Sort Method: quicksort  Memory: 27kB
+                     ->  Partial HashAggregate  (cost=2799.17..2799.54 rows=30 width=36) (actual time=4.778..4.784 rows=30 loops=2)
+                           Group Key: id_sala
+                           Batches: 1  Memory Usage: 32kB
+                           Buffers: shared hit=1239
+                           Worker 0:  Batches: 1  Memory Usage: 32kB
+                           ->  Parallel Seq Scan on comprobante  (cost=0.00..2783.12 rows=3210 width=10) (actual time=0.019..4.444 rows=2744 loops=2)
+                                 Filter: (fecha >= (CURRENT_DATE - '3 mons'::interval))
+                                 Rows Removed by Filter: 72256
+                                 Buffers: shared hit=1239
+ Planning:
+   Buffers: shared hit=51
+ Planning Time: 0.131 ms
+ Execution Time: 7.770 ms
+(29 rows)
+

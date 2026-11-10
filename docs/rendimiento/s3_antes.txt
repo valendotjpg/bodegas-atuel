@@ -1,0 +1,35 @@
+﻿                                                                                   QUERY PLAN                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=4055.99..4056.20 rows=12 width=40) (actual time=5.535..6.928 rows=3 loops=1)
+   Group Key: (CASE WHEN (s.id_cliente IS NOT NULL) THEN 'socio'::text WHEN (d.id_cliente IS NOT NULL) THEN 'distribuidor'::text ELSE 'exportador'::text END)
+   Buffers: shared hit=1331
+   ->  Sort  (cost=4055.99..4056.02 rows=12 width=36) (actual time=5.527..6.919 rows=20 loops=1)
+         Sort Key: (CASE WHEN (s.id_cliente IS NOT NULL) THEN 'socio'::text WHEN (d.id_cliente IS NOT NULL) THEN 'distribuidor'::text ELSE 'exportador'::text END), c.id_cliente
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=1331
+         ->  Gather  (cost=1000.57..4055.77 rows=12 width=36) (actual time=0.298..6.882 rows=20 loops=1)
+               Workers Planned: 1
+               Workers Launched: 1
+               Buffers: shared hit=1325
+               ->  Nested Loop Left Join  (cost=0.56..3054.57 rows=7 width=36) (actual time=0.329..3.786 rows=10 loops=2)
+                     Buffers: shared hit=1325
+                     ->  Nested Loop Left Join  (cost=0.28..3029.14 rows=7 width=8) (actual time=0.316..3.728 rows=10 loops=2)
+                           Buffers: shared hit=1282
+                           ->  Parallel Seq Scan on comprobante c  (cost=0.00..3003.71 rows=7 width=4) (actual time=0.292..3.677 rows=10 loops=2)
+                                 Filter: ((id_sala = 6) AND (fecha > (CURRENT_DATE - 7)))
+                                 Rows Removed by Filter: 74990
+                                 Buffers: shared hit=1239
+                           ->  Index Only Scan using socio_pkey on socio s  (cost=0.28..3.63 rows=1 width=4) (actual time=0.004..0.004 rows=0 loops=20)
+                                 Index Cond: (id_cliente = c.id_cliente)
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=43
+                     ->  Index Only Scan using distribuidor_pkey on distribuidor d  (cost=0.28..3.63 rows=1 width=4) (actual time=0.005..0.005 rows=0 loops=20)
+                           Index Cond: (id_cliente = c.id_cliente)
+                           Heap Fetches: 0
+                           Buffers: shared hit=43
+ Planning:
+   Buffers: shared hit=186
+ Planning Time: 0.538 ms
+ Execution Time: 6.991 ms
+(31 rows)
+
