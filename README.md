@@ -10,7 +10,7 @@ Acceso a datos con SQL directo (sin ORM).
 - Docker Desktop (con WSL2 en Windows)
 - Un cliente SQL: `psql`, DBeaver o pgAdmin
 - Python 3.10+ (generador de datos: `psycopg`, `Faker`)
-- Lenguaje de la API: *a definir*
+- API: Python (FastAPI + psycopg); front: React (Vite)
 
 ## Levantar la base en local
 
@@ -65,10 +65,10 @@ docker compose up -d
 | H1 | Modelado | completado |
 | H2 | Integridad y logica en la base | completado |
 | H3 | Carga masiva | completado |
-| H4 | Indices y rendimiento | pendiente |
-| H5 | Consultas SQL | pendiente |
-| H6 | API | en desarrollo |
-| H7 | Front | pendiente |
+| H4 | Indices y rendimiento | en curso (mediciones hechas; falta el informe consolidado) |
+| H5 | Consultas SQL | completado |
+| H6 | API | completado |
+| H7 | Front | completado |
 | H8 | Nube | en curso (base en Neon, API/front pendiente) |
 | H9 | Documentacion y defensa | pendiente |
 
