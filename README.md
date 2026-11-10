@@ -65,7 +65,7 @@ docker compose up -d
 | H1 | Modelado | completado |
 | H2 | Integridad y logica en la base | completado |
 | H3 | Carga masiva | completado |
-| H4 | Indices y rendimiento | completado (informe en `docs/rendimiento/informe.md`) |
+| H4 | Indices y rendimiento | completado (informe en `docs/etapa4_rendimiento/informe.md`) |
 | H5 | Consultas SQL | completado |
 | H6 | API | completado |
 | H7 | Front | completado |
