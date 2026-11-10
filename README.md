@@ -100,8 +100,9 @@ docker compose up -d
 | `api/` | API REST FastAPI con psycopg |
 | `front/` | Front en React + Vite (ver `front/README.md`) |
 | `docs/` | Informe final, DER, diccionario de datos e informes por etapa |
+| `docs/etapa1_documentacion/` | DER (integrado y por area), esquema relacional y diccionario de datos |
 | `docs/etapa2_*` | Trazabilidad de reglas y demostracion de concurrencia |
-| `docs/rendimiento/` | Indices: planes antes y despues, tabla comparativa, costo de escritura |
+| `docs/etapa4_rendimiento/` | Indices: planes antes y despues, tabla comparativa, costo de escritura |
 | `docs/etapa8_despliegue/` | Informe y evidencia del despliegue en Neon y Render |
 
 ## Hitos

@@ -41,9 +41,19 @@ para cualquier otro cliente.
 
 ## 2. Modelo de datos
 
-> Los diagramas y el diccionario de la etapa 1 van en `docs/`:
-> `der.png` (DER), `esquema_relacional.png` y `diccionario_datos.md`.
-> **Pendiente:** subirlos al repo desde el archivo `.drawio` del grupo.
+Documentación de la etapa 1, en [`etapa1_documentacion/`](etapa1_documentacion):
+
+- [DER integrado](<etapa1_documentacion/DER Integrado.png>) y el DER por área:
+  [localidades y salas](etapa1_documentacion/1_Localidades_Salas.drawio.png),
+  [bodegas y vinos](etapa1_documentacion/2_Bodegas_Vinos.drawio.png),
+  [fincas y lotes](etapa1_documentacion/3_Fincas_Lotes.drawio.png),
+  [clientes y ventas](etapa1_documentacion/4_Clientes_Ventas.drawio.png),
+  [stock y movimientos](etapa1_documentacion/5_Stock_Movimientos.drawio.png).
+- [Esquema relacional](etapa1_documentacion/Esquema_Relacional.drawio.png).
+- [Diccionario de datos](<etapa1_documentacion/Diccionario de datos.md>):
+  campos, tipos, claves, nulos, referencias y restricciones de cada tabla.
+
+![DER integrado](<etapa1_documentacion/DER Integrado.png>)
 
 ### Entidades
 
@@ -200,7 +210,7 @@ Detalle: [`db/seed/informe_carga.md`](../db/seed/informe_carga.md) y
 
 ## 5. Índices y rendimiento
 
-Detalle: [`rendimiento/informe.md`](rendimiento/informe.md), con las salidas de
+Detalle: [`etapa4_rendimiento/informe.md`](etapa4_rendimiento/informe.md), con las salidas de
 `EXPLAIN (ANALYZE, BUFFERS)` de cada consulta antes y después.
 
 Hay 5 índices en `008_indices.sql`: compuesto, sobre FK (dos), parcial y con
