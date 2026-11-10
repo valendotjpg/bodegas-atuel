@@ -1,0 +1,3 @@
+﻿Tabla;Filas insertadas;Sín índices secundarios;Con índices secundarios;Sobrecosto;Extra por fila;Tamaño de los índices
+comprobante (2 índices);150000;402 ms;729 ms;+327 ms;~2,2 µs;"idx_comprobante_sala_fecha: 4.640 kB; idx_ventas_trimestre: 4640 kb = ~9,1 MB"
+detalle_comprobante (1 índice);600000;1317 ms;2102 ms;+785 ms;~1,3 µs;idx_detalle_vino: 13 MB

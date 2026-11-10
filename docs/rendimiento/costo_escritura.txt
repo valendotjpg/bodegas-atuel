@@ -1,0 +1,52 @@
+﻿Timing is on.
+docker : NOTICE:  table "cmp_sin" does not exist, skipping
+En línea: 1 Carácter: 52
++ ... itura.sql | docker exec -i bodegas_db psql -U bodegas_owner -d bodega ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (NOTICE:  table ...exist, skipping:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+NOTICE:  table "cmp_con" does not exist, skipping
+NOTICE:  table "det_sin" does not exist, skipping
+NOTICE:  table "det_con" does not exist, skipping
+DROP TABLE
+Time: 14.704 ms
+CREATE TABLE
+Time: 48.236 ms
+ALTER TABLE
+Time: 19.249 ms
+CREATE TABLE
+Time: 3.870 ms
+ALTER TABLE
+Time: 6.383 ms
+CREATE INDEX
+Time: 7.981 ms
+CREATE INDEX
+Time: 5.624 ms
+INSERT 0 150000
+Time: 402.099 ms
+INSERT 0 150000
+Time: 729.095 ms
+CREATE TABLE
+Time: 5.683 ms
+ALTER TABLE
+Time: 7.726 ms
+CREATE TABLE
+Time: 2.552 ms
+ALTER TABLE
+Time: 8.142 ms
+CREATE INDEX
+Time: 6.997 ms
+INSERT 0 600000
+Time: 1317.070 ms (00:01.317)
+INSERT 0 600000
+Time: 2102.196 ms (00:02.102)
+         indexname          | tamanio 
+----------------------------+---------
+ idx_detalle_vino           | 13 MB
+ idx_comprobante_sala_fecha | 4640 kB
+(2 rows)
+
+Time: 19.050 ms
+DROP TABLE
+Time: 32.139 ms
