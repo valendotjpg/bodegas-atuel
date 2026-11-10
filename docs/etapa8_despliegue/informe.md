@@ -207,3 +207,21 @@ HTTP 409
 5. Capturar la demo (defensa): `/salud`, tablero con datos de la nube y la
    venta sin stock respondiendo 409 con el mensaje de la regla.
 
+### Resultado (despliegue completo)
+
+La URL pública quedó activa y verificada el 10/11/2026
+(`evidencia/07_url_publica.txt`):
+
+- `https://bodegas-atuel.onrender.com/salud` → 200, conecta a `neondb` con el
+  rol `bodegas_api` (nunca el propietario).
+- `/` y las rutas de la SPA → 200 (front compilado servido por la misma API).
+- `/api/vinos` → 200 con datos de la base de la nube.
+- **Venta sin stock por HTTP**: 409 con
+  `{"detail":"Stock insuficiente del vino 261 en la sala 19: hay 101, se piden 5000 (RN-09)","sqlstate":"P0001"}`
+  — regla de negocio de la base respondiendo en producción.
+- El grupo validó que la URL abre desde dispositivos externos (criterio
+  «cualquier persona puede abrir la URL pública»).
+
+Resta para la etapa 9 unificar estos resultados en el informe final y
+preparar la demo en vivo (la captura de la venta sin stock ya está).
+

@@ -69,7 +69,7 @@ docker compose up -d
 | H5 | Consultas SQL | completado |
 | H6 | API | completado |
 | H7 | Front | completado |
-| H8 | Nube | en curso (base en Neon, API/front pendiente) |
+| H8 | Nube | completado (`https://bodegas-atuel.onrender.com`, informe en `docs/etapa8_despliegue/`) |
 | H9 | Documentacion y defensa | pendiente |
 
 ## Flujo de trabajo
@@ -92,10 +92,10 @@ Grupo N°7:
 
 - Base de datos: **Neon**, branch `production` (region `aws-sa-east-1`,
   conexion TLS `sslmode=require`). Roles de minimos privilegios creados con
-  `007_roles.sql`. Detalle en `docs/etapa8_despliegue/informe.md`.
-- URL publica (API + front, Render): *pendiente de importar el Blueprint
-  (`render.yaml`); la imagen `Dockerfile.deploy` ya pasa el smoke test contra
-  la base de Neon (`evidencia/06_api_despliegue.txt`).
+  `007_roles.sql`.
+- URL publica (API + front en Render): <https://bodegas-atuel.onrender.com>
+  verificada en `docs/etapa8_despliegue/evidencia/07_url_publica.txt`.
+  Con el plan Free hay cold start tras 15 min de inactividad.
 
 ## Despliegue en la nube (resumen)
 
