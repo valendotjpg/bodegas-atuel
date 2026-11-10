@@ -1,0 +1,13 @@
+info|id_sala|cod_vino|stock
+stock de la prueba:|19|261|101
+(1 row)
+BEGIN
+INSERT 0 1
+psql:/dev/stdin:29: ERROR:  Stock insuficiente del vino 261 en la sala 19: hay 101, se piden 102 (RN-09)
+ 
+CONTEXT:  PL/pgSQL function fn_trg_detalle_validar() line 38 at RAISE
+ROLLBACK
+control
+comprobantes_de_hoy=0
+(1 row)
+

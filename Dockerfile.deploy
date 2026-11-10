@@ -1,0 +1,22 @@
+# Despliegue en la nube (etapa 8): imagen unica que sirve la API y el front
+# compilado desde la misma URL publica. En local sigue valiendo
+# `docker compose up` (con db+api+front separados).
+
+# 1) compilar el front
+FROM node:20-alpine AS front_build
+WORKDIR /front
+COPY front/package*.json ./
+RUN npm ci
+COPY front/ ./
+RUN npm run build
+
+# 2) imagen final: API FastAPI + front estatico en front_dist/
+FROM python:3.12-slim
+WORKDIR /app
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_ROOT_USER_ACTION=ignore
+COPY api/requirements.txt ./requirements.txt
+RUN pip install -r requirements.txt
+COPY api/ ./
+COPY --from=front_build /front/dist ./front_dist
+# Render Docker: el servicio escucha en $PORT (default local 8000)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port \"${PORT:-8000}\""]

@@ -1,0 +1,51 @@
+          tabla          | filas  
+-------------------------+--------
+ analisis_calidad        |   1500
+ auditoria               |      1
+ bodega                  |     20
+ cepa                    |     12
+ cliente                 |   5000
+ composicion             |    300
+ comprobante             |  30000
+ deposito_central        |      1
+ detalle_comprobante     | 120000
+ distribuidor            |   1667
+ empleado                |     60
+ encargado               |     15
+ exportador              |   1667
+ finca                   |     50
+ ingreso                 |   1000
+ ingreso_vino            |   1000
+ localidad               |     24
+ lote                    |   1500
+ maridaje                |      8
+ parcela                 |   1000
+ permiso_exportacion     |   4998
+ sala_venta              |     30
+ sala_venta_vino         |   6599
+ socio                   |   1666
+ stock_deposito          |    300
+ transferencia           |   1000
+ transferencia_vino      |   1000
+ transportista           |     30
+ transportista_localidad |     30
+ transportista_telefono  |     30
+ vino                    |    300
+ vino_maridaje           |    300
+(32 rows)
+
+                control                | inconsistencias 
+---------------------------------------+-----------------
+ vino_sin_bodega                       |               0
+ stock_negativo                        |               0
+ stock_sala_negativo                   |               0
+ detalle_sin_comprobante               |               0
+ totales_incorrectos                   |               0
+ descuento_distinto_al_tipo_de_cliente |               0
+ subtotal_renglon_incorrecto           |               0
+(7 rows)
+
+ cod_vino | porcentaje_total 
+----------+------------------
+(0 rows)
+

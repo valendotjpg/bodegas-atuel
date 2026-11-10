@@ -1,0 +1,19 @@
+# Backup y restauracion - etapa 8 (Neon -> base nueva local)
+== 1) pg_dump de la base actual (imagen postgres:18, formato custom -Fc) ==
+#    docker run --rm -v .\backups:/out postgres:18 pg_dump "<NEON_DATABASE_URL>" -Fc -f /out/neon_backup_20261109_2133.dump
+#    Archivo: neon_backup_20261109_2133.dump (1362668 bytes)
+
+== 2) base nueva postgres:18 (prueba_pg18) ==
+pg_isready: /var/run/postgresql:5432 - accepting connections
+
+== 3) pg_restore sobre la base nueva ==
+# docker run --rm --network bodegas-atuel_default -e PGPASSWORD=... -v .\backups:/out
+#   postgres:18 pg_restore --no-owner --no-acl --role=bodegas_owner -h prueba_pg18 -U bodegas_owner
+#   -d prueba_restore /out/neon_backup_20261109_2133.dump
+pg_restore: sin errores
+restore_code=0
+
+== 4) comparacion de conteos neon vs base restaurada ==
+NEON    : analisis_calidad=1500 | auditoria=1 | bodega=20 | cepa=12 | cliente=5000 | composicion=300 | comprobante=30000 | deposito_central=1 | detalle_comprobante=120000 | distribuidor=1667 | empleado=60 | encargado=15 | exportador=1667 | finca=50 | ingreso=1000 | ingreso_vino=1000 | localidad=24 | lote=1500 | maridaje=8 | parcela=1000 | permiso_exportacion=4998 | sala_venta=30 | sala_venta_vino=6599 | socio=1666 | stock_deposito=300 | transferencia=1000 | transferencia_vino=1000 | transportista=30 | transportista_localidad=30 | transportista_telefono=30 | vino=300 | vino_maridaje=300
+RESTAUR : analisis_calidad=1500 | auditoria=1 | bodega=20 | cepa=12 | cliente=5000 | composicion=300 | comprobante=30000 | deposito_central=1 | detalle_comprobante=120000 | distribuidor=1667 | empleado=60 | encargado=15 | exportador=1667 | finca=50 | ingreso=1000 | ingreso_vino=1000 | localidad=24 | lote=1500 | maridaje=8 | parcela=1000 | permiso_exportacion=4998 | sala_venta=30 | sala_venta_vino=6599 | socio=1666 | stock_deposito=300 | transferencia=1000 | transferencia_vino=1000 | transportista=30 | transportista_localidad=30 | transportista_telefono=30 | vino=300 | vino_maridaje=300
+RESULTADO=COINCIDEN conteos en las 32 tablas

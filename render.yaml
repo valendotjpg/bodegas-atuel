@@ -1,0 +1,18 @@
+# Blueprint de Render para la etapa 8: una sola URL publica con HTTPS que
+# sirve la API FastAPI y el front React compilado (misma imagen, ver
+# Dockerfile.deploy). Realizar New -> Blueprint -> conectar este repo.
+#
+# Secretos: nunca valores reales en este archivo. API_DATABASE_URL (el DSN
+# pooled de Neon con el rol API bodegas_api) se carga desde el dashboard de
+# Render, con el valor del .env local (que nunca entra al repo).
+services:
+  - type: web
+    name: bodegas-atuel
+    runtime: docker
+    dockerfilePath: ./Dockerfile.deploy
+    plan: free
+    healthCheckPath: /salud
+    autoDeploy: true
+    envVars:
+      - key: API_DATABASE_URL
+        sync: false

@@ -1,0 +1,54 @@
+FUNCION: fn_antiguedad_anios(p_desde date, p_hasta date)
+FUNCION: fn_descuento_cliente(p_id_cliente integer)
+FUNCION: fn_stock_sala(p_id_sala integer, p_cod_vino integer)
+FUNCION: fn_total_comprobante(p_nro_comprobante integer)
+FUNCION: fn_trg_auditar_precio()
+FUNCION: fn_trg_bloqueo_renglones()
+FUNCION: fn_trg_composicion_100()
+FUNCION: fn_trg_comprobante_inicial()
+FUNCION: fn_trg_control_estado()
+FUNCION: fn_trg_detalle_aplicar()
+FUNCION: fn_trg_detalle_validar()
+FUNCION: fn_trg_transferencia_fecha()
+PROCEDIMIENTO: sp_procesar_ingreso(IN p_cod_ingreso integer, IN p_id_deposito integer)
+PROCEDIMIENTO: sp_procesar_transferencia(IN p_nro_solicitud integer, IN p_id_deposito integer)
+VISTA: v_documentos_pendientes
+VISTA: v_stock_total
+VISTA: v_ventas_mensuales
+ENUM: estado_documento
+INDICE: idx_ventas_trimestre
+ROL API: bodegas_api
+ROL REPORTES: bodegas_report
+FILAS analisis_calidad: 1500
+FILAS auditoria: 1
+FILAS bodega: 20
+FILAS cepa: 12
+FILAS cliente: 5000
+FILAS composicion: 300
+FILAS comprobante: 30000
+FILAS deposito_central: 1
+FILAS detalle_comprobante: 120000
+FILAS distribuidor: 1667
+FILAS empleado: 60
+FILAS encargado: 15
+FILAS exportador: 1667
+FILAS finca: 50
+FILAS ingreso: 1000
+FILAS ingreso_vino: 1000
+FILAS localidad: 24
+FILAS lote: 1500
+FILAS maridaje: 8
+FILAS parcela: 1000
+FILAS permiso_exportacion: 4998
+FILAS sala_venta: 30
+FILAS sala_venta_vino: 6599
+FILAS socio: 1666
+FILAS stock_deposito: 300
+FILAS transferencia: 1000
+FILAS transferencia_vino: 1000
+FILAS transportista: 30
+FILAS transportista_localidad: 30
+FILAS transportista_telefono: 30
+FILAS vino: 300
+FILAS vino_maridaje: 300
+TAMANO: 26 MB

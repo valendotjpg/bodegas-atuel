@@ -1,0 +1,27 @@
+# Smoke test de la imagen de despliegue (Dockerfile.deploy) contra la base de Neon
+# docker run -e PORT=8000 -e API_DATABASE_URL=<rol bodegas_api sobre pooled de Neon>
+#   -p 18000:8000 bodegas-deploy
+
+== GET /salud ==
+{"status":"ok","database":"neondb","user":"bodegas_api"}
+
+== GET /api/salud (doble montaje) ==
+{"status":"ok","database":"neondb","user":"bodegas_api"}
+
+== GET /api/vinos?limit=2 (lectura con rol API de minimos privilegios) ==
+[{"cod_vino":1,"anada":2015,"tipo":"espumante","nombre_comercial":"Reserva Atuel 00000","precio":400.0,"graduacion":12.5,"volumen_ml":375,"cuit_bodega":"30000000012","bodega":"Bodega 012"},{"cod_vino":2,"anada":2016,"tipo":"blanco","nombre_comercial":"Reserva Atuel 00001","precio":401.0,"graduacion":12.6,"volumen_ml":1500,"cuit_bodega":"30000000003","bodega":"Bodega 003"}]
+
+== GET / (front servido por la misma API) ==
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bodegas del Atuel</title>
+    <link rel=" ...
+
+== GET /transferencias (fallback SPA) ==
+HTTP 200, ficha html de 2121 bytes
+
+== POST /api/comprobantes con stock insuficiente (RN-09, Rol API) ==
+{"detail":"Stock insuficiente del vino 261 en la sala 19: hay 101, se piden 5000 (RN-09)","sqlstate":"P0001"} HTTP: 409
