@@ -135,7 +135,14 @@ export default function Venta() {
           </div>
 
           <AvisoError error={error} />
-          <div><button className="primario" disabled={!listo || enviando} onClick={vender}>{enviando ? 'Registrando…' : 'Confirmar venta'}</button></div>
+          <div>
+            {!listo && (
+              <p className="muted" style={{ margin: '0 0 8px' }}>
+                Falta{!sala ? ' la sala' : ''}{!sala && !cliente ? ' y' : ''}{!cliente ? ' el cliente (buscalo, y hacé click en la fila de resultados para elegirlo)' : ''}{(!sala || !cliente) && renglones.length === 0 ? ' y' : ''}{renglones.length === 0 ? ' agregar al menos un vino' : ''}.
+              </p>
+            )}
+            <button className="primario" disabled={!listo || enviando} onClick={vender}>{enviando ? 'Registrando…' : 'Confirmar venta'}</button>
+          </div>
         </div>
 
         <div className="tarjeta">
