@@ -45,6 +45,10 @@ Es el punto de entrada de la aplicación:
 - Inicializa y cierra el pool durante el ciclo de vida de la aplicación.
 - Abre transacciones para las operaciones que modifican varias tablas.
 - Registra el manejador centralizado de errores de PostgreSQL.
+- Monta las rutas dos veces, en `/` y en `/api`: los proxies de nginx y Vite
+  quitan el prefijo `/api`, y en la nube el front llama directo a `/api/...`.
+- Si existe `front_dist/` (imagen `Dockerfile.deploy` de la etapa 8), sirve
+  también el front compilado; sus rutas se registran antes que las de la API.
 
 ### `api/db.py`
 
@@ -96,20 +100,25 @@ Traduce errores de PostgreSQL a respuestas HTTP comprensibles:
 | `23514` | 422 | Violación de `CHECK` |
 | `23502` | 422 | Campo obligatorio nulo |
 | `22P02` | 400 | Formato inválido |
-| `P0001` | 409 | Regla de negocio de la base |
+| `P0001` | 409 | Regla de negocio de la base (los triggers usan `raise_exception`) |
+| `55000` | 409 | Estado de objeto no válido |
+| `P0002` | 404 | Dato no encontrado dentro de un procedimiento |
 | `40001`, `40P01` | 503 | Conflicto o bloqueo transitorio |
 
 ### `api/tests/test_api.py`
 
-Contiene 11 pruebas HTTP. Verifica:
+Contiene 18 pruebas HTTP. Buscan los IDs a través de la API (no dependen de
+una carga puntual) y verifican:
 
-- Estado de salud.
-- Paginación de vinos.
-- Filtros parametrizados.
-- Respuestas `404`.
-- Validaciones `422`.
-- Violaciones de claves foráneas traducidas a `409`.
-- Procesamiento de documentos inexistentes.
+- Estado de salud, paginación y filtros parametrizados.
+- Respuestas `404` (vino, cliente y comprobante inexistentes; terminar una
+  transferencia inexistente).
+- Validaciones `422` de Pydantic.
+- FK inexistente traducida a `409`.
+- Reglas de la base traducidas a `409`: venta sin stock (RN-09), procesar una
+  transferencia sin terminar, renglón en una transferencia terminada (RN-12) y
+  corte que no suma 100 % (RN-05).
+- Endpoints de catálogos y el reporte de vinos sin stock por sala.
 
 Las pruebas requieren que PostgreSQL y la API puedan conectarse a una base
 inicializada.
@@ -142,12 +151,12 @@ Evita subir cachés de Python y archivos generados localmente.
 | GET | `/salud` | Comprueba la conexión y devuelve base/usuario |
 | GET | `/vinos` | Lista vinos con paginación y filtros |
 | GET | `/vinos/{cod_vino}` | Consulta un vino con composición y maridajes |
-| GET | `/clientes` | Lista clientes paginados |
+| GET | `/clientes` | Lista clientes paginados, con búsqueda `q` por nombre, razón social o documento |
 | GET | `/clientes/{id_cliente}` | Consulta un cliente |
 | GET | `/comprobantes/{id}` | Consulta un comprobante y sus renglones |
 
-Los filtros disponibles para vinos son `tipo`, `id_cepa`, `cuit_bodega` y
-`anada`. `limit` está limitado entre 1 y 100 para evitar respuestas
+Los filtros disponibles para vinos son `tipo`, `id_cepa`, `cuit_bodega`,
+`anada` y `q` (búsqueda por nombre comercial con `ILIKE`, parametrizada). `limit` está limitado entre 1 y 100 para evitar respuestas
 excesivamente grandes.
 
 ### ABM de vinos
@@ -190,6 +199,8 @@ para calcular los valores definitivos.
 | POST | `/ingresos/{id}/renglones` | Agrega un vino al ingreso |
 | POST | `/ingresos/{id}/terminar` | Termina el ingreso |
 | POST | `/ingresos/{id}/procesar` | Procesa el ingreso en un depósito |
+| GET | `/transferencias` | Lista transferencias, con filtros `estado` e `id_sala` |
+| GET | `/transferencias/{id}` | Transferencia con sus renglones |
 | POST | `/transferencias` | Crea una transferencia |
 | POST | `/transferencias/{id}/renglones` | Agrega un vino a la transferencia |
 | POST | `/transferencias/{id}/terminar` | Termina la transferencia |
@@ -203,12 +214,19 @@ El procesamiento llama a `sp_procesar_ingreso` o
 | Método | Ruta | Función |
 |---|---|---|
 | GET | `/reportes/top-vinos` | Diez vinos más vendidos |
-| GET | `/reportes/ventas-por-sala` | Ventas agrupadas por sala |
-| GET | `/reportes/vinos-sin-stock` | Vinos cuyo stock total es cero |
-| GET | `/reportes/transportista-activo` | Ingresos por transportista |
+| GET | `/reportes/ventas-por-sala` | Total vendido por sala en el último trimestre (S8) |
+| GET | `/reportes/vinos-sin-stock?id_sala=` | Vinos sin stock en la sala y con stock en el depósito (S6) |
+| GET | `/reportes/transportista-activo` | Transportista con más ingresos en el último mes (S7) |
 | GET | `/reportes/trazabilidad/{cod_vino}` | Historial de ingresos y transferencias |
 
 Los reportes consultan vistas o consultas SQL de solo lectura.
+
+### Catálogos
+
+| Método | Ruta | Función |
+|---|---|---|
+| GET | `/cepas`, `/bodegas`, `/maridajes` | Listas para los formularios del front |
+| GET | `/salas`, `/depositos` | Salas con su localidad y depósitos |
 
 ## 4. Flujo de una solicitud
 
@@ -265,27 +283,17 @@ uvicorn main:app --reload
 
 ## 7. Pruebas
 
-Con PostgreSQL disponible y la API configurada:
+Con la base levantada, desde el contenedor de la API (ya tiene `pytest`):
 
 ```bash
-cd api
-pytest -q
+docker compose exec api python -m pytest -q tests
 ```
 
-La suite existente contiene 11 pruebas. La implementación fue verificada en
-cuanto a sintaxis, registro de rutas y configuración de Compose. La ejecución
-integrada contra contenedores debe realizarse con Docker iniciado y con las
-variables del archivo `.env` completas.
+Resultado verificado sobre un clon limpio del repositorio, con la carga
+completa: **18 passed**.
 
-## 8. Qué queda para completar
+## 8. Estado
 
-La base de la API REST está implementada, pero antes de presentar la etapa
-como terminada conviene:
-
-1. Levantar PostgreSQL y la API con Docker.
-2. Ejecutar las 11 pruebas contra la base real.
-3. Probar manualmente los endpoints desde Swagger.
-4. Agregar pruebas específicas para venta sin stock y transiciones de estado
-   inválidas.
-5. Confirmar que la rama `etapa-6-api` incluya los cambios de base y carga que
-   se quieran presentar junto con la API.
+La API está completa y desplegada en <https://bodegas-atuel.onrender.com>
+(ver `docs/etapa8_despliegue/`). La prueba de inyección SQL fallida está en
+`docs/evidencia_inyeccion_sql.txt`.
