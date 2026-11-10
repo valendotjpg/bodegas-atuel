@@ -377,8 +377,6 @@ Detalle: [`etapa8_despliegue/informe.md`](etapa8_despliegue/informe.md) y
 
 ## 9. Conclusiones
 
-> Borrador para revisar entre los tres antes de entregar.
-
 ### Dificultades
 
 - **Inicialización de Docker:** las migraciones solo corren al crear el volumen,
