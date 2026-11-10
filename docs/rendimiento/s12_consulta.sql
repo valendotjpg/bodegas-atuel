@@ -1,6 +1,12 @@
 -- Clientes que compraron todos los vinos de una bodega específica y clientes que nunca compraron vinos tinto
+SET jit=off;
+\set bodega_s12 '\'Bodega 019\''
 
+ANALYZE comprobante;
+ANALYZE detalle_comprobante;
+ANALYZE vino;
 
+EXPLAIN (ANALYZE,BUFFERS)
 WITH compras_bodega AS MATERIALIZED (
     SELECT DISTINCT co.id_cliente, d.cod_vino
       FROM Comprobante co
@@ -20,6 +26,7 @@ SELECT count(*) AS clientes_que_compraron_todos_los_vinos_de_la_bodega
                                        WHERE cb.id_cliente = c.id_cliente
                                          AND cb.cod_vino = v.cod_vino));
 
+EXPLAIN (ANALYZE,BUFFERS)
 SELECT count(*) AS clientes_que_nunca_compraron_tinto
   FROM Cliente c
  WHERE NOT EXISTS (SELECT 1
