@@ -1,0 +1,8 @@
+﻿Consulta;Índice;Antes;Después;Mejora;Recorrido;Filas leída de la tabla;Buffers
+S8 ventas por sala, último trimestre;idx_ventas_trimestre;7,77 ms;1,22 ms;6,4x;Parallel Seq Scan -> Index Only Scan;150000 -> 5487;1246 -> 28
+S3 cllientes por tipo, sala y semana;idx_comprobante_sala_fecha;6,99 ms;0,48 ms;14,5x;Parallel Seq Scan -> Index Only Scan;150000 -> 20;1331 -> 92
+S12 (a) compraron todos los vinos de una bodega;idx_detalle_vino;27,8 ms;6,31 ms;4,4x;Parallel Seq Scan -> Index Only Scan;600000 -> 528;6901 -> 2389
+S12 (b) nunca compraron vino tinto;idx_detalle_vino;155,5 ms;93,0 ms;1,7x;Seq Scan -> Index Only Scan (x120);600000 -> 141248;5908 -> 2238
+S9 ficha de un vino;idx_vino_nombre;2,08 ms;2,11 ms;sin cambio;Index Scan (unique_nombre) → Index Scan;1 -> 1;93 -> 93
+S10 rendimiento por parcela ((count))*;idx_rendimiento_parcela;933,7 ms;929,2 ms;sin cambio;Seq Scan sobre lote + CTE Scan, igual en ambos;5000 -> 5000;49 -> 49
+;;;;;;;
