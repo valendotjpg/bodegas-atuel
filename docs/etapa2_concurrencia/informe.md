@@ -305,11 +305,20 @@ Por eso se eligió READ COMMITTED con `FOR UPDATE` dentro del trigger:
 
 ## Capturas
 
-Una por escenario, con las dos terminales visibles después del último paso:
+Terminal A a la izquierda, Terminal B en el medio y `preparar.sql` a la derecha.
 
-| Archivo | Qué tiene que verse |
-|---|---|
-| `capturas/1_sin_bloqueo.png` | Los dos `UPDATE 1` |
-| `capturas/2_for_update.png` | B devolviendo 0 después de esperar |
-| `capturas/3_trigger_venta.png` | El error «Stock insuficiente» en B |
-| `capturas/4_repeatable_read.png` | El error de serialización en B |
+**1. Sin bloqueo:** los dos `UPDATE 1`; se vendio dos veces la misma botella.
+
+![Escenario 1](capturas/1_sin_bloqueo.png)
+
+**2. Con `FOR UPDATE`:** B espera a que A confirme y despues lee 0.
+
+![Escenario 2](capturas/2_for_update.png)
+
+**3. Trigger de venta:** B espera y falla con «Stock insuficiente ... (RN-09)».
+
+![Escenario 3](capturas/3_trigger_venta.png)
+
+**4. REPEATABLE READ:** B lee 1 de su foto y su `UPDATE` falla por serializacion.
+
+![Escenario 4](capturas/4_repeatable_read.png)

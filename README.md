@@ -2,7 +2,11 @@
 
 TPI de Base de Datos, UTN FRSR, Ingenieria en Sistemas, 3.er anio, ciclo 2026.
 Sistema de gestion y distribucion de una empresa vitivinicola. Motor: PostgreSQL 16.
-Acceso a datos con SQL directo (sin ORM).
+Acceso a datos con SQL directo (sin ORM). Las reglas de negocio (stock,
+descuentos, totales, estados) viven en la base; la API y el front no calculan.
+
+- Version en la nube: <https://bodegas-atuel.onrender.com>
+- Informe final: [`docs/informe_final.md`](docs/informe_final.md)
 
 ## Requisitos
 
@@ -32,6 +36,47 @@ Para cargar los datos de prueba (etapa 3) sobre la base recien creada:
 docker compose run --rm seed
 ```
 
+## Migraciones
+
+Los archivos de `db/migrations/` corren solos y en orden (001 a 008) la primera
+vez que se crea el volumen de la base. Para aplicarlos a mano sobre otra base
+vacia, con el rol propietario y las variables de roles del `.env` cargadas:
+
+```bash
+for f in db/migrations/0*.sql; do psql "$DSN_PROPIETARIO" -v ON_ERROR_STOP=1 -f "$f"; done
+```
+
+## Pruebas
+
+Reglas de negocio (15 casos) y privilegios de cada rol, con el rol propietario:
+
+```bash
+docker compose cp tests/db_tests.sql db:/tmp/db_tests.sql
+docker compose exec db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/db_tests.sql'
+docker compose cp tests/db_tests_roles.sql db:/tmp/db_tests_roles.sql
+docker compose exec db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/db_tests_roles.sql'
+```
+
+Consultas de control de la carga y consultas de la seccion 8 (todas terminan en
+`ROLLBACK`, no cambian la base):
+
+```bash
+docker compose cp db/seed/controles.sql db:/tmp/controles.sql
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/controles.sql'
+docker compose cp consultas/select.sql db:/tmp/select.sql
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/select.sql'
+```
+
+API (con la base levantada y el puerto 5432 expuesto):
+
+```bash
+cd api
+pip install -r requirements.txt
+API_DATABASE_URL="postgresql://<API_DB_USER>:<API_DB_PASSWORD>@localhost:5432/bodegas" pytest -q
+```
+
+## Puerto ocupado
+
 Si ya tenes un PostgreSQL instalado en la PC usando el puerto 5432, cambia
 `POSTGRES_PORT` en el `.env` (ej. `5433`).
 
@@ -49,14 +94,15 @@ docker compose up -d
 | Carpeta | Contenido |
 |---|---|
 | `db/migrations/` | `001_esquema.sql` a `008_indices.sql`, en orden (`007_roles.sql` lee las claves de API y reportes del `.env`) |
-| `db/seed/` | CSV de catalogos y script de carga masiva |
+| `db/seed/` | CSV de catalogos, script de carga masiva, controles e informe de carga |
 | `tests/` | `db_tests.sql` (un caso por regla RN-01 a RN-15) y `db_tests_roles.sql` (privilegios de cada rol) |
 | `consultas/` | `insert.sql`, `update.sql`, `delete.sql`, `select.sql` |
 | `api/` | API REST FastAPI con psycopg |
 | `front/` | Front en React + Vite (ver `front/README.md`) |
-| `docs/` | DER, diccionario de datos, informes por etapa |
-| `docs/etapa8_despliegue/` | Informe y evidencia del despliegue en Neon (etapa 8) |
-| `docs/` | DER, diccionario de datos, informes por etapa |
+| `docs/` | Informe final, DER, diccionario de datos e informes por etapa |
+| `docs/etapa2_*` | Trazabilidad de reglas y demostracion de concurrencia |
+| `docs/rendimiento/` | Indices: planes antes y despues, tabla comparativa, costo de escritura |
+| `docs/etapa8_despliegue/` | Informe y evidencia del despliegue en Neon y Render |
 
 ## Hitos
 
@@ -70,7 +116,7 @@ docker compose up -d
 | H6 | API | completado |
 | H7 | Front | completado |
 | H8 | Nube | completado (`https://bodegas-atuel.onrender.com`, informe en `docs/etapa8_despliegue/`) |
-| H9 | Documentacion y defensa | pendiente |
+| H9 | Documentacion y defensa | en curso (`docs/informe_final.md`) |
 
 ## Flujo de trabajo
 
